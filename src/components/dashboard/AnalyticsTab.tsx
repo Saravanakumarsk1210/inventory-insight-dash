@@ -373,7 +373,6 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
   }, [productPerformance]);
 
   // COLORS for charts
-  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe', '#00C49F'];
   const EXPIRY_COLORS = {
     'expired': '#f87171', // red
     'expiring-soon': '#fcd34d', // amber
@@ -671,8 +670,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                   />
                   <Scatter
                     name="Expiry Risk"
-                    data={expiryAlerts.concat(
-                      data
+                    data={data
                       .map(item => {
                         const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
                         if (daysUntilExpiry > 180) return null;
@@ -691,21 +689,28 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                       })
                       .filter(Boolean)
                       .slice(0, 30) // Limit to 30 items for performance
-                    )}
+                    }
                     fill="#8884d8"
                   >
-                    {expiryAlerts.concat(
-                      data
-                        .map(item => {
-                          const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
-                          if (daysUntilExpiry > 180) return null;
-                          return getExpiryStatus(daysUntilExpiry);
-                        })
-                        .filter(Boolean)
-                        .slice(0, 30)
-                    ).map((status, index) => (
-                      <Cell key={`cell-${index}`} fill={EXPIRY_COLORS[status as keyof typeof EXPIRY_COLORS] || '#8884d8'} />
-                    ))}
+                    {data
+                      .map(item => {
+                        const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
+                        if (daysUntilExpiry > 180) return null;
+                        const status = getExpiryStatus(daysUntilExpiry);
+                        
+                        return {
+                          status,
+                          index: Math.random() // Just for unique keys
+                        };
+                      })
+                      .filter(Boolean)
+                      .slice(0, 30)
+                      .map((item, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={EXPIRY_COLORS[item.status as keyof typeof EXPIRY_COLORS] || '#8884d8'} 
+                        />
+                      ))}
                   </Scatter>
                 </ScatterChart>
               </ResponsiveContainer>
