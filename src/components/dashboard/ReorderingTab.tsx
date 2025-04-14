@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { AlertTriangle, Check, Info, Mail, RefreshCw, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface ReorderingTabProps {
   data: InventoryItem[];
@@ -37,6 +38,8 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
   const [uploadedMinStockFile, setUploadedMinStockFile] = useState<File | null>(null);
   const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [emailSendStatus, setEmailSendStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const { toast } = useToast();
 
   const form = useForm<ReorderingFormValues>({
@@ -110,7 +113,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
     }, 2000);
   };
 
-  // Send email alert - simulating the Python functionality
+  // Send email alert - simulating the Python functionality with enhanced feedback
   const sendEmailAlert = () => {
     if (lowStockItems.length === 0) {
       toast({
@@ -121,18 +124,57 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
       return;
     }
     
-    setIsEmailSending(true);
-    
-    // Simulate email sending process
-    setTimeout(() => {
-      setIsEmailSending(false);
-      
+    // Check if recipient email is provided
+    const recipientEmail = form.getValues().recipientEmail;
+    if (!recipientEmail) {
       toast({
-        title: "Email Sent Successfully",
-        description: `Alert email sent to ${form.getValues().recipientEmail || "the configured recipient"}.`,
+        title: "Email Address Required",
+        description: "Please enter a recipient email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Show the email sending dialog and simulate the sending process
+    setShowEmailDialog(true);
+    setIsEmailSending(true);
+    setEmailSendStatus("sending");
+    
+    // Simulate email sending process with different stages
+    setTimeout(() => {
+      // First stage - connecting to email service
+      toast({
+        title: "Connecting to Email Service",
+        description: "Establishing connection to the email server...",
         variant: "default",
       });
-    }, 2500);
+      
+      // Second stage after 1.5 seconds - preparing email
+      setTimeout(() => {
+        toast({
+          title: "Preparing Email Content",
+          description: "Generating email with low stock information...",
+          variant: "default",
+        });
+        
+        // Final stage after another 1.5 seconds - sending email
+        setTimeout(() => {
+          setIsEmailSending(false);
+          setEmailSendStatus("success");
+          
+          toast({
+            title: "Email Sent Successfully",
+            description: `Alert email sent to ${recipientEmail}.`,
+            variant: "default",
+          });
+        }, 1500);
+      }, 1500);
+    }, 1000);
+  };
+
+  const closeEmailDialog = () => {
+    setShowEmailDialog(false);
+    setEmailSendStatus("idle");
   };
 
   return (
@@ -173,7 +215,12 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
                     <FormItem>
                       <FormLabel>Alert Recipient Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="recipient@example.com" {...field} />
+                        <Input 
+                          placeholder="recipient@example.com" 
+                          type="email"
+                          {...field} 
+                          required
+                        />
                       </FormControl>
                     </FormItem>
                   )}
@@ -390,6 +437,54 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Email Sending Dialog */}
+      <Dialog open={showEmailDialog} onOpenChange={closeEmailDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {emailSendStatus === "sending" ? "Sending Email Alert..." : 
+               emailSendStatus === "success" ? "Email Alert Sent" : 
+               "Email Status"}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center justify-center py-4 space-y-4">
+            {emailSendStatus === "sending" ? (
+              <>
+                <RefreshCw className="h-12 w-12 animate-spin text-blue-500" />
+                <p>Sending email to {form.getValues().recipientEmail}...</p>
+                <p className="text-sm text-muted-foreground">
+                  This may take a moment. Please wait...
+                </p>
+              </>
+            ) : emailSendStatus === "success" ? (
+              <>
+                <Check className="h-12 w-12 text-green-500" />
+                <p>Email successfully sent!</p>
+                <div className="text-sm text-muted-foreground text-center">
+                  <p>The alert email has been sent to:</p>
+                  <p className="font-medium mt-1">{form.getValues().recipientEmail}</p>
+                </div>
+              </>
+            ) : emailSendStatus === "error" ? (
+              <>
+                <AlertTriangle className="h-12 w-12 text-red-500" />
+                <p>Failed to send email</p>
+                <p className="text-sm text-muted-foreground">
+                  There was an error sending the email. Please try again.
+                </p>
+              </>
+            ) : null}
+          </div>
+          
+          <DialogFooter>
+            <Button onClick={closeEmailDialog}>
+              {emailSendStatus === "success" ? "Close" : "Cancel"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
