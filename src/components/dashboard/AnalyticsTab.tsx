@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import { InventoryItem } from "@/data/inventoryData";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -771,3 +772,49 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                     .filter(product => product.performance === 'high')
                     .slice(0, 5)
                     .map((product, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>{formatCurrency(product.totalValue)}</TableCell>
+                        <TableCell>{product.averageTurnover} days</TableCell>
+                        <TableCell>{product.salesVelocity}/mo</TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            <div>
+              <h3 className="text-base font-medium mb-3 flex items-center gap-1">
+                <ArrowDown className="h-4 w-4 text-red-500" />
+                Slow-Moving Products
+              </h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Value</TableHead>
+                    <TableHead>Turnover</TableHead>
+                    <TableHead>Sales</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {productPerformance
+                    .filter(product => product.performance === 'low')
+                    .slice(0, 5)
+                    .map((product, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>{formatCurrency(product.totalValue)}</TableCell>
+                        <TableCell>{product.averageTurnover} days</TableCell>
+                        <TableCell>{product.salesVelocity}/mo</TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
