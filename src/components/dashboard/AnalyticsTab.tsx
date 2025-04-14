@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { InventoryItem } from "@/data/inventoryData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +44,6 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
     });
   }, [data, productFilter, expiryFilter, searchQuery]);
   
-  // Helper function for expiry calculations
   const calculateDaysUntilExpiry = (expiryDate: string) => {
     const expiry = new Date(expiryDate);
     const today = new Date();
@@ -94,7 +92,6 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
       }));
   };
 
-  // Computed data for components
   const stockLevelsData = useMemo(() => calculateStockLevels(filteredData), [filteredData]);
   
   const selectedProductData = useMemo(() => {
@@ -136,60 +133,54 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* 1. Product-wise Stock Levels */}
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Product-wise Stock Levels</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <StockLevelComparison data={data} />
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Product-wise Stock Levels</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StockLevelComparison data={data} />
+        </CardContent>
+      </Card>
 
-        {/* 2. Expiring Soon Alert */}
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Expiring Soon Alert</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ExpiringItemsList data={data} />
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Expiring Soon Alert</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ExpiringItemsList data={data} />
+        </CardContent>
+      </Card>
 
-        {/* 3. Reorder Plan */}
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Reorder Plan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ReorderPlanTable data={data} />
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Reorder Plan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ReorderPlanTable data={data} />
+        </CardContent>
+      </Card>
 
-        {/* 4. Product Insights */}
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Product Insights</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProductInsights 
-              data={filteredData}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              productFilter={productFilter}
-              setProductFilter={setProductFilter}
-              expiryFilter={expiryFilter}
-              setExpiryFilter={setExpiryFilter}
-              selectedProduct={selectedProduct}
-              setSelectedProduct={setSelectedProduct}
-              uniqueProductNames={uniqueProductNames}
-              stockLevelsData={stockLevelsData}
-              selectedProductData={selectedProductData}
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Product Insights</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProductInsights 
+            data={filteredData}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            productFilter={productFilter}
+            setProductFilter={setProductFilter}
+            expiryFilter={expiryFilter}
+            setExpiryFilter={setExpiryFilter}
+            selectedProduct={selectedProduct}
+            setSelectedProduct={setSelectedProduct}
+            uniqueProductNames={uniqueProductNames}
+            stockLevelsData={stockLevelsData}
+            selectedProductData={selectedProductData}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
