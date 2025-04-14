@@ -6,7 +6,9 @@ import {
   DollarSign,
   BadgePercent,
   Activity,
-  Search
+  Search,
+  BarChart3,
+  ShoppingCart
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatsCard } from "./StatsCard";
@@ -18,6 +20,9 @@ import { InventoryItem, inventoryData } from "@/data/inventoryData";
 import { formatCurrency, calculateDaysUntilExpiry, getExpiryStatus } from "@/utils/formatters";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AnalyticsTab } from "./AnalyticsTab";
+import { ReorderingTab } from "./ReorderingTab";
 
 export function DashboardLayout() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -131,20 +136,50 @@ export function DashboardLayout() {
         />
       </div>
       
-      {/* Main dashboard grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Inventory table - spans 2 columns */}
-        <InventoryTable data={filteredData} />
+      {/* Tabbed Interface */}
+      <Tabs defaultValue="overview" className="w-full mb-6">
+        <TabsList className="grid grid-cols-3 mb-6 w-full max-w-md">
+          <TabsTrigger value="overview">
+            <Activity className="h-4 w-4 mr-2" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="analytics">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="reordering">
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            Reordering
+          </TabsTrigger>
+        </TabsList>
         
-        {/* Sidebar content - 1 column */}
-        <div className="space-y-6">
-          <ExpiryTimeline data={filteredData} />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
-            <ProductValueChart data={filteredData} />
-            <InventoryTypeDistribution data={filteredData} />
+        {/* Overview Tab */}
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Inventory table - spans 2 columns */}
+            <InventoryTable data={filteredData} />
+            
+            {/* Sidebar content - 1 column */}
+            <div className="space-y-6">
+              <ExpiryTimeline data={filteredData} />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
+                <ProductValueChart data={filteredData} />
+                <InventoryTypeDistribution data={filteredData} />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics">
+          <AnalyticsTab data={filteredData} />
+        </TabsContent>
+        
+        {/* Reordering Tab */}
+        <TabsContent value="reordering">
+          <ReorderingTab data={filteredData} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
