@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import { InventoryItem } from "@/data/inventoryData";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -693,8 +692,21 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                       .filter(Boolean)
                       .slice(0, 30) // Limit to 30 items for performance
                     )}
-                    fill={(entry) => EXPIRY_COLORS[entry.status as keyof typeof EXPIRY_COLORS] || '#000'}
-                  />
+                    fill="#8884d8"
+                  >
+                    {expiryAlerts.concat(
+                      data
+                        .map(item => {
+                          const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
+                          if (daysUntilExpiry > 180) return null;
+                          return getExpiryStatus(daysUntilExpiry);
+                        })
+                        .filter(Boolean)
+                        .slice(0, 30)
+                    ).map((status, index) => (
+                      <Cell key={`cell-${index}`} fill={EXPIRY_COLORS[status as keyof typeof EXPIRY_COLORS] || '#8884d8'} />
+                    ))}
+                  </Scatter>
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
