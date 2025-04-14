@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InventoryItem } from "@/data/inventoryData";
 import { formatCurrency, calculateDaysUntilExpiry, getExpiryStatus, getUniqueProductNames } from "@/utils/formatters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
@@ -16,15 +16,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { 
   Filter, Package2, Zap, TrendingUp, Calendar, AlertTriangle, 
-  ArrowDownRight, ArrowUpRight, ChevronDown, ChevronUp, Search
+  ArrowDownRight, ArrowUpRight, ChevronDown, ChevronUp, Search,
+  BarChart3, Box, LineChart as LineChartIcon
 } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { StockInsightsTab } from "./StockInsightsTab";
 
 interface AnalyticsTabProps {
   data: InventoryItem[];
 }
 
 export function AnalyticsTab({ data }: AnalyticsTabProps) {
+  const [activeTab, setActiveTab] = useState("stock-insights");
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [predictedDays, setPredictedDays] = useState(30);
   const [productFilter, setProductFilter] = useState<string>("all");
@@ -517,62 +520,126 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* ML Models Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>ML Models</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Use our ML models to predict stock levels and optimize your inventory.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center mb-2">
-                <Zap className="h-5 w-5 mr-2 text-purple-500" />
-                <h4 className="font-medium">XGBoost Stock Prediction</h4>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                Predicts future stock levels based on historical consumption patterns.
-              </p>
-              <Button onClick={() => alert('Running XGBoost model...')}>
-                Run Prediction
-              </Button>
-            </div>
-            
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center mb-2">
-                <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
-                <h4 className="font-medium">ARIMA Forecasting</h4>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                Time series analysis to forecast demand patterns and trends.
-              </p>
-              <Button onClick={() => alert('Running ARIMA model...')}>
-                Run Forecast
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Product Insights Section */}
-      {renderProductInsights()}
-      
-      {/* Stock Overview Section */}
-      {renderStockOverviewChart()}
-      
-      {/* Monthly Sales vs Stock Section */}
-      {renderMonthlySalesChart()}
-      
-      {/* Expiry Risk Monitor */}
-      {renderExpiryRiskChart()}
-      
-      {/* Best Performing Products */}
-      {renderProductPerformanceChart()}
+      {/* Sub-tabs within Analytics */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full max-w-lg grid-cols-3 mb-6">
+          <TabsTrigger value="stock-insights" className="flex items-center">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Stock Insights
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="flex items-center">
+            <LineChartIcon className="h-4 w-4 mr-2" />
+            Performance
+          </TabsTrigger>
+          <TabsTrigger value="forecasting" className="flex items-center">
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Forecasting
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Predicted Stock Table */}
-      {renderPredictedStockTable()}
+        {/* Stock Insights Tab */}
+        <TabsContent value="stock-insights">
+          <StockInsightsTab data={data} />
+        </TabsContent>
+        
+        {/* Performance Tab */}
+        <TabsContent value="performance">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Performance Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Select products to view their performance metrics and analytics.
+                </p>
+                
+                <div className="flex mt-4 space-x-4">
+                  <Select>
+                    <SelectTrigger className="w-56">
+                      <SelectValue placeholder="Select a product" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {uniqueProductNames.map(name => (
+                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button>View Performance</Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-muted/50">
+              <CardHeader>
+                <CardTitle className="text-muted-foreground">Select a product to view performance analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center min-h-[300px]">
+                <div className="flex flex-col items-center">
+                  <Box className="h-12 w-12 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">No product selected</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        {/* Forecasting Tab */}
+        <TabsContent value="forecasting">
+          <div className="space-y-6">
+            {/* ML Models Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>ML Models</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Use our ML models to predict stock levels and optimize your inventory.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center mb-2">
+                      <Zap className="h-5 w-5 mr-2 text-purple-500" />
+                      <h4 className="font-medium">XGBoost Stock Prediction</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Predicts future stock levels based on historical consumption patterns.
+                    </p>
+                    <Button onClick={() => alert('Running XGBoost model...')}>
+                      Run Prediction
+                    </Button>
+                  </div>
+                  
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center mb-2">
+                      <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
+                      <h4 className="font-medium">ARIMA Forecasting</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Time series analysis to forecast demand patterns and trends.
+                    </p>
+                    <Button onClick={() => alert('Running ARIMA model...')}>
+                      Run Forecast
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-muted/50">
+              <CardHeader>
+                <CardTitle className="text-muted-foreground">Run a forecast model to view predictions</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center min-h-[300px]">
+                <div className="flex flex-col items-center">
+                  <TrendingUp className="h-12 w-12 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">No forecast data available</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
