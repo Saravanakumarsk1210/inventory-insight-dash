@@ -1,70 +1,66 @@
 
-interface EmailSendResponse {
-  success: boolean;
-  message: string;
-  output?: string;
-}
+import axios from 'axios';
 
-interface FileUploadResponse {
-  success: boolean;
-  inventoryFile?: string;
-  minStockFile?: string;
-  message?: string;
-}
-
-// API URL for the backend server
+// Define the base URL for the server API
 const API_URL = 'http://localhost:3001';
 
-// Function to upload inventory and minimum stock files
-export const uploadInventoryFiles = async (
-  inventoryFile: File,
-  minStockFile: File
-): Promise<FileUploadResponse> => {
+// Function to check server status
+export const checkServerStatus = async () => {
+  try {
+    const response = await axios.get(API_URL);
+    return { isConnected: true, data: response.data };
+  } catch (error) {
+    return { isConnected: false, error };
+  }
+};
+
+// Function to upload inventory files
+export const uploadInventoryFiles = async (inventoryFile: File, minStockFile: File) => {
   try {
     const formData = new FormData();
     formData.append('inventoryFile', inventoryFile);
     formData.append('minStockFile', minStockFile);
-
-    const response = await fetch(`${API_URL}/upload-files`, {
-      method: 'POST',
-      body: formData,
+    
+    const response = await axios.post(`${API_URL}/upload-files`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
-
-    return await response.json();
+    
+    return response.data;
   } catch (error) {
     console.error('Error uploading files:', error);
-    return {
-      success: false,
-      message: 'Failed to upload files. Please try again.',
-    };
+    throw error;
+  }
+};
+
+// Function to process uploaded inventory files and get low stock items
+export const processInventoryFiles = async (inventoryFilePath: string, minStockFilePath: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/process-inventory`, {
+      inventoryFilePath,
+      minStockFilePath
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error processing inventory files:', error);
+    throw error;
   }
 };
 
 // Function to send email alert
-export const sendEmailAlert = async (
-  recipientEmail: string,
-  inventoryFilePath?: string,
-  minStockFilePath?: string
-): Promise<EmailSendResponse> => {
+export const sendEmailAlert = async (recipientEmail: string, inventoryFilePath?: string, minStockFilePath?: string) => {
   try {
-    const response = await fetch(`${API_URL}/send-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        recipientEmail,
-        inventoryFilePath,
-        minStockFilePath,
-      }),
+    const response = await axios.post(`${API_URL}/send-email`, {
+      recipientEmail,
+      inventoryFilePath,
+      minStockFilePath
     });
-
-    return await response.json();
+    
+    return response.data;
   } catch (error) {
-    console.error('Error sending email:', error);
-    return {
-      success: false,
-      message: 'Failed to connect to the email server. Please try again.',
-    };
+    console.error('Error sending email alert:', error);
+    throw error;
   }
 };

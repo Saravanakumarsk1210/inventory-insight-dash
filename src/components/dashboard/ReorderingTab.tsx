@@ -10,7 +10,12 @@ import { useForm } from "react-hook-form";
 import { AlertTriangle, Check, Info, Mail, RefreshCw, Upload, Server } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { sendEmailAlert, uploadInventoryFiles } from "@/services/emailService";
+import { 
+  sendEmailAlert, 
+  uploadInventoryFiles, 
+  checkServerStatus,
+  processInventoryFiles
+} from "@/services/emailService";
 
 interface ReorderingTabProps {
   data: InventoryItem[];
@@ -69,18 +74,18 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
   };
 
   // Check if backend server is running
-  const checkServerStatus = async () => {
+  const handleCheckServerStatus = async () => {
     try {
-      const response = await fetch('http://localhost:3001', { method: 'GET' });
-      if (response.ok) {
-        setServerConnected(true);
+      const response = await checkServerStatus();
+      setServerConnected(response.isConnected);
+      
+      if (response.isConnected) {
         toast({
           title: "Server Connected",
           description: "Backend server is running and ready to process inventory data.",
           variant: "default",
         });
       } else {
-        setServerConnected(false);
         toast({
           title: "Server Not Available",
           description: "Backend server is not responding. Please start the server.",
@@ -143,22 +148,51 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
     }
   };
 
-  // Process inventory data - now uses existing simulation but in a real implementation would use the backend
-  const processInventory = () => {
+  // Process inventory data - now uses uploaded files when available
+  const processInventory = async () => {
     setIsProcessing(true);
     
     // Check if real files should be processed
-    if (uploadStatus === "success" && serverConnected) {
-      // In a real implementation, we would call the backend to process the files
-      // For now, we'll use the simulated data
-      simulateProcessing();
+    if (uploadStatus === "success" && serverConnected && uploadedFileNames.inventory && uploadedFileNames.minStock) {
+      try {
+        // Process the uploaded files using the backend
+        const response = await processInventoryFiles(
+          uploadedFileNames.inventory,
+          uploadedFileNames.minStock
+        );
+        
+        if (response.success) {
+          setLowStockItems(response.lowStockItems);
+          setLastUpdated(new Date().toLocaleString());
+          
+          toast({
+            title: response.isSimulated ? "Simulated Data Used" : "Real Data Processed",
+            description: `Found ${response.lowStockItems.length} items below minimum stock level.`,
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Processing Failed",
+            description: response.message || "Failed to process inventory files.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Processing Error",
+          description: "An error occurred while processing inventory files.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsProcessing(false);
+      }
     } else {
-      // For demo/fallback, use the simulated processing
+      // Fallback to simulated data when files aren't uploaded or server isn't connected
       simulateProcessing();
     }
   };
 
-  // Simulate processing (as in the original code)
+  // Simulate processing (as fallback)
   const simulateProcessing = () => {
     setTimeout(() => {
       // Generate simulated low stock data based on the current inventory
@@ -197,8 +231,8 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
       setIsProcessing(false);
       
       toast({
-        title: "Inventory Processed",
-        description: `Found ${simulatedLowStock.length} items below minimum stock level.`,
+        title: "Simulated Data Used",
+        description: `Found ${simulatedLowStock.length} items below minimum stock level. No real files were processed.`,
         variant: "default",
       });
     }, 2000);
@@ -293,7 +327,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
               <Check className="h-3 w-3" /> Server Connected
             </span>
           ) : (
-            <Button variant="outline" size="sm" onClick={checkServerStatus} className="text-xs">
+            <Button variant="outline" size="sm" onClick={handleCheckServerStatus} className="text-xs">
               <Server className="h-3 w-3 mr-1" /> Check Server
             </Button>
           )}
@@ -423,7 +457,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
                     {isProcessing ? (
                       <RefreshCw className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Upload className="h-4 w-4" />
+                      <RefreshCw className="h-4 w-4" />
                     )}
                     Process Inventory Data
                   </Button>
