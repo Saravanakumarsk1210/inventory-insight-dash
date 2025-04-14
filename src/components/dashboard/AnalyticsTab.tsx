@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import { InventoryItem } from "@/data/inventoryData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -319,7 +318,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value, name, props) => [`${value} items`, 'Count']}
+                    formatter={(value) => [`${value} items`, 'Count']}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -335,7 +334,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis type="category" dataKey="name" />
-                  <Tooltip formatter={(value) => [`${parseInt(value).toLocaleString()} INR`, 'Value']} />
+                  <Tooltip formatter={(value) => [`${parseInt(String(value)).toLocaleString()} INR`, 'Value']} />
                   <Legend />
                   <Bar dataKey="value" name="Total Value" fill="#8884d8" />
                 </BarChart>

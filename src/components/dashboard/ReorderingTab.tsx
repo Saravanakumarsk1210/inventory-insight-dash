@@ -130,7 +130,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
       toast({
         title: "Email Sent Successfully",
         description: `Alert email sent to ${form.getValues().recipientEmail || "the configured recipient"}.`,
-        variant: "success",
+        variant: "default",
       });
     }, 2500);
   };
