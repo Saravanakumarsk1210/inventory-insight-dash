@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
-import { AlertTriangle, Check, Info, Mail, RefreshCw, Upload } from "lucide-react";
+import { AlertTriangle, Check, Info, Mail, RefreshCw, Upload, Server } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { sendEmailAlert, uploadInventoryFiles } from "@/services/emailService";
 
 interface ReorderingTabProps {
   data: InventoryItem[];
@@ -40,6 +41,9 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [emailSendStatus, setEmailSendStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
+  const [serverConnected, setServerConnected] = useState(false);
+  const [uploadedFileNames, setUploadedFileNames] = useState<{inventory?: string, minStock?: string}>({});
   const { toast } = useToast();
 
   const form = useForm<ReorderingFormValues>({
@@ -64,11 +68,98 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
     }
   };
 
-  // Process inventory data - simulated functionality based on the Python code
+  // Check if backend server is running
+  const checkServerStatus = async () => {
+    try {
+      const response = await fetch('http://localhost:3001', { method: 'GET' });
+      if (response.ok) {
+        setServerConnected(true);
+        toast({
+          title: "Server Connected",
+          description: "Backend server is running and ready to process inventory data.",
+          variant: "default",
+        });
+      } else {
+        setServerConnected(false);
+        toast({
+          title: "Server Not Available",
+          description: "Backend server is not responding. Please start the server.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      setServerConnected(false);
+      toast({
+        title: "Server Not Connected",
+        description: "Backend server is not running. Please start the server with 'node server.js'",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Upload files to the server
+  const uploadFiles = async () => {
+    if (!uploadedInventoryFile || !uploadedMinStockFile) {
+      toast({
+        title: "Files Required",
+        description: "Please upload both inventory and minimum stock files.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadStatus("uploading");
+
+    try {
+      const response = await uploadInventoryFiles(uploadedInventoryFile, uploadedMinStockFile);
+      
+      if (response.success) {
+        setUploadStatus("success");
+        setUploadedFileNames({
+          inventory: response.inventoryFile,
+          minStock: response.minStockFile
+        });
+        
+        toast({
+          title: "Files Uploaded Successfully",
+          description: "Your inventory files are ready for processing.",
+          variant: "default",
+        });
+      } else {
+        setUploadStatus("error");
+        toast({
+          title: "Upload Failed",
+          description: response.message || "Failed to upload files.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      setUploadStatus("error");
+      toast({
+        title: "Upload Error",
+        description: "An error occurred while uploading files.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Process inventory data - now uses existing simulation but in a real implementation would use the backend
   const processInventory = () => {
     setIsProcessing(true);
     
-    // Simulate processing time
+    // Check if real files should be processed
+    if (uploadStatus === "success" && serverConnected) {
+      // In a real implementation, we would call the backend to process the files
+      // For now, we'll use the simulated data
+      simulateProcessing();
+    } else {
+      // For demo/fallback, use the simulated processing
+      simulateProcessing();
+    }
+  };
+
+  // Simulate processing (as in the original code)
+  const simulateProcessing = () => {
     setTimeout(() => {
       // Generate simulated low stock data based on the current inventory
       const simulatedLowStock: LowStockItem[] = data
@@ -113,8 +204,8 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
     }, 2000);
   };
 
-  // Send email alert - simulating the Python functionality with enhanced feedback
-  const sendEmailAlert = () => {
+  // Send email alert - now connects to the Python script through the backend
+  const handleSendEmailAlert = async () => {
     if (lowStockItems.length === 0) {
       toast({
         title: "No Low Stock Items",
@@ -135,13 +226,12 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
       return;
     }
 
-    // Show the email sending dialog and simulate the sending process
+    // Show the email sending dialog
     setShowEmailDialog(true);
     setIsEmailSending(true);
     setEmailSendStatus("sending");
     
-    // Simulate email sending process with different stages
-    setTimeout(() => {
+    try {
       // First stage - connecting to email service
       toast({
         title: "Connecting to Email Service",
@@ -149,27 +239,38 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
         variant: "default",
       });
       
-      // Second stage after 1.5 seconds - preparing email
-      setTimeout(() => {
+      // Send the actual email using the backend service
+      const response = await sendEmailAlert(
+        recipientEmail,
+        uploadedFileNames.inventory,
+        uploadedFileNames.minStock
+      );
+      
+      if (response.success) {
+        setEmailSendStatus("success");
         toast({
-          title: "Preparing Email Content",
-          description: "Generating email with low stock information...",
+          title: "Email Sent Successfully",
+          description: `Alert email sent to ${recipientEmail}.`,
           variant: "default",
         });
-        
-        // Final stage after another 1.5 seconds - sending email
-        setTimeout(() => {
-          setIsEmailSending(false);
-          setEmailSendStatus("success");
-          
-          toast({
-            title: "Email Sent Successfully",
-            description: `Alert email sent to ${recipientEmail}.`,
-            variant: "default",
-          });
-        }, 1500);
-      }, 1500);
-    }, 1000);
+      } else {
+        setEmailSendStatus("error");
+        toast({
+          title: "Email Sending Failed",
+          description: response.message || "Failed to send email alert.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      setEmailSendStatus("error");
+      toast({
+        title: "Email Error",
+        description: "An error occurred while sending the email.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEmailSending(false);
+    }
   };
 
   const closeEmailDialog = () => {
@@ -186,11 +287,22 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
             Monitor low stock items and generate reordering alerts
           </p>
         </div>
-        {lastUpdated && (
-          <div className="text-sm text-muted-foreground">
-            Last updated: {lastUpdated}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {serverConnected ? (
+            <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 flex items-center gap-1">
+              <Check className="h-3 w-3" /> Server Connected
+            </span>
+          ) : (
+            <Button variant="outline" size="sm" onClick={checkServerStatus} className="text-xs">
+              <Server className="h-3 w-3 mr-1" /> Check Server
+            </Button>
+          )}
+          {lastUpdated && (
+            <div className="text-sm text-muted-foreground">
+              Last updated: {lastUpdated}
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Configuration Form */}
@@ -287,6 +399,22 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
                 </div>
                 
                 <div className="flex flex-wrap gap-4">
+                  {uploadedInventoryFile && uploadedMinStockFile && (
+                    <Button 
+                      onClick={uploadFiles} 
+                      disabled={uploadStatus === "uploading"}
+                      variant="secondary"
+                      className="flex items-center gap-2"
+                    >
+                      {uploadStatus === "uploading" ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                      Upload Files
+                    </Button>
+                  )}
+                  
                   <Button 
                     onClick={processInventory} 
                     disabled={isProcessing}
@@ -301,7 +429,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
                   </Button>
                   
                   <Button 
-                    onClick={sendEmailAlert} 
+                    onClick={handleSendEmailAlert} 
                     disabled={isEmailSending || lowStockItems.length === 0}
                     variant="outline"
                     className="flex items-center gap-2"
@@ -445,6 +573,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
             <DialogTitle>
               {emailSendStatus === "sending" ? "Sending Email Alert..." : 
                emailSendStatus === "success" ? "Email Alert Sent" : 
+               emailSendStatus === "error" ? "Email Alert Failed" :
                "Email Status"}
             </DialogTitle>
           </DialogHeader>
@@ -455,7 +584,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
                 <RefreshCw className="h-12 w-12 animate-spin text-blue-500" />
                 <p>Sending email to {form.getValues().recipientEmail}...</p>
                 <p className="text-sm text-muted-foreground">
-                  This may take a moment. Please wait...
+                  This may take a moment. The Python script is processing your data...
                 </p>
               </>
             ) : emailSendStatus === "success" ? (
@@ -472,7 +601,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
                 <AlertTriangle className="h-12 w-12 text-red-500" />
                 <p>Failed to send email</p>
                 <p className="text-sm text-muted-foreground">
-                  There was an error sending the email. Please try again.
+                  There was an error sending the email. Please check the server logs for details.
                 </p>
               </>
             ) : null}
