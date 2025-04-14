@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import { InventoryItem } from "@/data/inventoryData";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,6 +20,9 @@ import { calculateDaysUntilExpiry, getExpiryStatus, formatCurrency } from "@/uti
 interface AnalyticsTabProps {
   data: InventoryItem[];
 }
+
+// Define colors for charts
+const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe', '#00C49F'];
 
 export function AnalyticsTab({ data }: AnalyticsTabProps) {
   // ML-based Sales Forecasting (simulated)
