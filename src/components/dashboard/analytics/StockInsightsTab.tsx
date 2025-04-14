@@ -1,10 +1,10 @@
 
 import React from "react";
 import { InventoryItem } from "@/data/inventoryData";
-import { StockLevelComparison } from "../StockLevelComparison";
 import { StockLevelTable } from "../StockLevelTable";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Warehouse, ShoppingCart, AlertCircle, TrendingUp } from "lucide-react";
+import { StockLevelComparison } from "../StockLevelComparison";
 
 interface StockInsightsTabProps {
   data: InventoryItem[];
@@ -107,10 +107,10 @@ export function StockInsightsTab({ data }: StockInsightsTabProps) {
       
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Stock Level Comparison Chart */}
+        {/* Stock Level Comparison Chart */}
         <StockLevelComparison data={data} />
         
-        {/* Right: Stock Level Details Table */}
+        {/* Stock Level Details Table */}
         <StockLevelTable data={data} />
       </div>
     </div>
