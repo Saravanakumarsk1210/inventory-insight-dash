@@ -1,3 +1,4 @@
+
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart,
@@ -20,8 +21,6 @@ import {
 } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StockInsightsTab } from "./StockInsightsTab";
-import { StockLevelComparison } from "./StockLevelComparison";
-import { StockLevelTable } from "./StockLevelTable";
 
 interface AnalyticsTabProps {
   data: InventoryItem[];
@@ -35,15 +34,19 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
   const [expiryFilter, setExpiryFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   
+  // Calculate unique product names for filtering
   const uniqueProductNames = useMemo(() => getUniqueProductNames(data), [data]);
   
+  // Apply filters
   const filteredData = useMemo(() => {
     return data.filter(item => {
+      // Apply product filter
       if (productFilter !== "all") {
         const productName = item.particulars.split(" - ")[0].trim();
         if (productName !== productFilter) return false;
       }
       
+      // Apply expiry filter
       if (expiryFilter !== "all") {
         const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
         const status = getExpiryStatus(daysUntilExpiry);
@@ -53,6 +56,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
         if (expiryFilter === "good" && status !== "good") return false;
       }
       
+      // Apply search filter
       if (searchQuery) {
         return item.particulars.toLowerCase().includes(searchQuery.toLowerCase()) ||
                item.particularId.toLowerCase().includes(searchQuery.toLowerCase());
@@ -62,6 +66,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
     });
   }, [data, productFilter, expiryFilter, searchQuery]);
   
+  // Various data processing functions for charts
   const calculateMonthlySales = (items: InventoryItem[]) => {
     const monthlySales: { [month: string]: number } = {};
     items.forEach(item => {
@@ -113,12 +118,14 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
   };
 
   const predictStockLevels = (items: InventoryItem[], days: number) => {
+    // Simplified prediction: assume linear consumption
     return items.map(item => ({
       ...item,
       predictedQuantity: Math.max(0, (typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity)) - (days / 30) * 10)
     }));
   };
 
+  // Calculate stock levels per product
   const calculateStockLevels = (items: InventoryItem[]) => {
     const stockLevels = new Map<string, { total: number, count: number }>();
     
@@ -148,17 +155,19 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
       .map(([name, { total, count }]) => ({ 
         name, 
         stock: total,
-        minThreshold: Math.round(total * 0.2),
+        minThreshold: Math.round(total * 0.2), // Simulate min threshold as 20% of current stock
         batches: count
       }));
   };
 
+  // Processed data for charts
   const monthlySalesData = useMemo(() => calculateMonthlySales(filteredData), [filteredData]);
   const expiryRiskData = useMemo(() => calculateExpiryRisk(filteredData), [filteredData]);
   const productPerformanceData = useMemo(() => calculateProductPerformance(filteredData), [filteredData]);
   const predictedStockData = useMemo(() => predictStockLevels(filteredData, predictedDays), [filteredData, predictedDays]);
   const stockLevelsData = useMemo(() => calculateStockLevels(filteredData), [filteredData]);
 
+  // Get product-specific data when a product is selected
   const selectedProductData = useMemo(() => {
     if (!selectedProduct) return null;
     
@@ -196,6 +205,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
     };
   }, [selectedProduct, filteredData]);
 
+  // Chart rendering functions
   const renderMonthlySalesChart = () => (
     <Card>
       <CardHeader>
@@ -249,6 +259,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
             </PieChart>
           </ResponsiveContainer>
           
+          {/* Expiry suggestions */}
           {expiryRiskData.find(item => item.status === "expiring-soon" && item.count > 0) && (
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
               <h4 className="font-medium flex items-center">
@@ -430,7 +441,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
       </CardContent>
     </Card>
   );
-
+  
   const renderStockOverviewChart = () => (
     <Card>
       <CardHeader>
@@ -509,6 +520,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* Sub-tabs within Analytics */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-lg grid-cols-3 mb-6">
           <TabsTrigger value="stock-insights" className="flex items-center">
@@ -525,16 +537,12 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="stock-insights" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <StockInsightsTab data={data} className="col-span-full" />
-            
-            <StockLevelComparison data={data} />
-            
-            <StockLevelTable data={data} />
-          </div>
+        {/* Stock Insights Tab */}
+        <TabsContent value="stock-insights">
+          <StockInsightsTab data={data} />
         </TabsContent>
         
+        {/* Performance Tab */}
         <TabsContent value="performance">
           <div className="space-y-6">
             <Card>
@@ -576,8 +584,10 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
           </div>
         </TabsContent>
         
+        {/* Forecasting Tab */}
         <TabsContent value="forecasting">
           <div className="space-y-6">
+            {/* ML Models Section */}
             <Card>
               <CardHeader>
                 <CardTitle>ML Models</CardTitle>
