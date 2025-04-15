@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import { InventoryItem } from "@/data/inventoryData";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,6 +20,9 @@ import { calculateDaysUntilExpiry, getExpiryStatus, formatCurrency } from "@/uti
 interface AnalyticsTabProps {
   data: InventoryItem[];
 }
+
+// Define colors for charts
+const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe', '#00C49F'];
 
 export function AnalyticsTab({ data }: AnalyticsTabProps) {
   // ML-based Sales Forecasting (simulated)
@@ -373,7 +377,6 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
   }, [productPerformance]);
 
   // COLORS for charts
-  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe', '#00C49F'];
   const EXPIRY_COLORS = {
     'expired': '#f87171', // red
     'expiring-soon': '#fcd34d', // amber
@@ -671,8 +674,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                   />
                   <Scatter
                     name="Expiry Risk"
-                    data={expiryAlerts.concat(
-                      data
+                    data={data
                       .map(item => {
                         const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
                         if (daysUntilExpiry > 180) return null;
@@ -691,9 +693,29 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                       })
                       .filter(Boolean)
                       .slice(0, 30) // Limit to 30 items for performance
-                    )}
-                    fill={(entry) => EXPIRY_COLORS[entry.status as keyof typeof EXPIRY_COLORS] || '#000'}
-                  />
+                    }
+                    fill="#8884d8"
+                  >
+                    {data
+                      .map(item => {
+                        const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
+                        if (daysUntilExpiry > 180) return null;
+                        const status = getExpiryStatus(daysUntilExpiry);
+                        
+                        return {
+                          status,
+                          index: Math.random() // Just for unique keys
+                        };
+                      })
+                      .filter(Boolean)
+                      .slice(0, 30)
+                      .map((item, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={EXPIRY_COLORS[item.status as keyof typeof EXPIRY_COLORS] || '#8884d8'} 
+                        />
+                      ))}
+                  </Scatter>
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
@@ -771,3 +793,49 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                     .filter(product => product.performance === 'high')
                     .slice(0, 5)
                     .map((product, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>{formatCurrency(product.totalValue)}</TableCell>
+                        <TableCell>{product.averageTurnover} days</TableCell>
+                        <TableCell>{product.salesVelocity}/mo</TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            <div>
+              <h3 className="text-base font-medium mb-3 flex items-center gap-1">
+                <ArrowDown className="h-4 w-4 text-red-500" />
+                Slow-Moving Products
+              </h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Value</TableHead>
+                    <TableHead>Turnover</TableHead>
+                    <TableHead>Sales</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {productPerformance
+                    .filter(product => product.performance === 'low')
+                    .slice(0, 5)
+                    .map((product, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>{formatCurrency(product.totalValue)}</TableCell>
+                        <TableCell>{product.averageTurnover} days</TableCell>
+                        <TableCell>{product.salesVelocity}/mo</TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
