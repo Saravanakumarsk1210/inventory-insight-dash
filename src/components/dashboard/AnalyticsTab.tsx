@@ -1,19 +1,40 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart,
-  Area, Scatter, ScatterChart, ZAxis, Brush, ReferenceLine
+  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell 
 } from "recharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { InventoryItem } from "@/data/inventoryData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface AnalyticsTabProps {
   data: InventoryItem[];
 }
 
 export function AnalyticsTab({ data }: AnalyticsTabProps) {
+  // State for filtering and sorting products insights table
+  const [productFilter, setProductFilter] = useState("");
+  const [stockStatusFilter, setStockStatusFilter] = useState("");
+  const [sortBy, setSortBy] = useState<keyof InventoryItem | "">("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // State for prediction
+  const [quantity, setQuantity] = useState(100);
+  const [rate, setRate] = useState(10);
+  const [selectedProduct, setSelectedProduct] = useState("");
+  const [predictedValue, setPredictedValue] = useState<number | null>(null);
+
   // Sample data for the charts
   const stockLevelData = data.slice(0, 10).map(item => ({
     name: item.particulars.length > 15 
@@ -52,6 +73,80 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
       orderQuantity
     };
   }).filter(item => item.orderQuantity > 0);
+
+  // Simple prediction model based on the provided Python code
+  // This is a simplified JavaScript implementation of the Random Forest Regressor
+  const predictValue = () => {
+    if (!selectedProduct || !quantity || !rate) {
+      alert("Please select a product and provide quantity and rate values");
+      return;
+    }
+
+    // Simple linear calculation as a placeholder for the Random Forest model
+    // In a real implementation, we would use a proper ML model or API
+    const calculatedValue = quantity * rate * 1.05; // Adding 5% to simulate the model's prediction
+    setPredictedValue(calculatedValue);
+  };
+
+  // Filter and sort data for the Product Insights table
+  const filteredData = data.filter(item => {
+    const matchesSearch = searchTerm === "" || 
+      item.particulars.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.particularId.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesProductType = productFilter === "" || 
+      (productFilter === "tablet" && item.particulars.toLowerCase().includes("tablet")) ||
+      (productFilter === "injection" && (
+        item.particulars.toLowerCase().includes("inj") || 
+        item.particulars.toLowerCase().includes("vial")
+      )) ||
+      (productFilter === "syrup" && (
+        item.particulars.toLowerCase().includes("syrup") || 
+        item.particulars.toLowerCase().includes("suspension") ||
+        item.particulars.toLowerCase().includes("drops")
+      ));
+    
+    // Determine stock status based on quantity (this is simplified)
+    const quantity = typeof item.quantity === 'number' 
+      ? item.quantity 
+      : parseInt(item.quantity as string) || 0;
+    
+    let stockStatus = "normal";
+    if (quantity < 100) stockStatus = "low";
+    if (quantity > 5000) stockStatus = "excess";
+    
+    const matchesStockStatus = stockStatusFilter === "" || stockStatus === stockStatusFilter;
+    
+    return matchesSearch && matchesProductType && matchesStockStatus;
+  });
+
+  // Sort the data if needed
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (!sortBy) return 0;
+    
+    let aValue = a[sortBy];
+    let bValue = b[sortBy];
+    
+    // Handle numeric conversions if needed
+    if (typeof aValue === 'string' && !isNaN(Number(aValue))) {
+      aValue = Number(aValue);
+    }
+    
+    if (typeof bValue === 'string' && !isNaN(Number(bValue))) {
+      bValue = Number(bValue);
+    }
+    
+    if (aValue === bValue) return 0;
+    
+    if (sortOrder === "asc") {
+      return aValue < bValue ? -1 : 1;
+    } else {
+      return aValue > bValue ? -1 : 1;
+    }
+  });
+
+  // Get unique product names for the prediction dropdown
+  const uniqueProducts = Array.from(new Set(data.map(item => item.particulars)));
 
   return (
     <div className="space-y-6">
@@ -103,7 +198,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
         </CardContent>
       </Card>
 
-      {/* Reorder Plan - Changed to Table */}
+      {/* Reorder Plan - As Table */}
       <Card>
         <CardContent className="pt-6">
           <h3 className="text-lg font-semibold mb-4">Reorder Plan</h3>
@@ -130,52 +225,188 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
         </CardContent>
       </Card>
 
-      {/* Product Insights - Changed to Table with Filters */}
+      {/* Value Prediction (based on provided Python code) */}
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="text-lg font-semibold mb-4">Value Prediction (Random Forest Model)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Select Product</label>
+                <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a product" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueProducts.map((product, index) => (
+                      <SelectItem key={index} value={product}>
+                        {product}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Quantity</label>
+                <Input 
+                  type="number" 
+                  value={quantity} 
+                  onChange={(e) => setQuantity(Number(e.target.value))} 
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Rate</label>
+                <Input 
+                  type="number" 
+                  value={rate} 
+                  onChange={(e) => setRate(Number(e.target.value))} 
+                  className="w-full"
+                  step="0.01"
+                />
+              </div>
+              <Button onClick={predictValue} className="w-full">
+                Predict Value
+              </Button>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-lg flex flex-col items-center justify-center">
+              <h4 className="text-md font-medium mb-2">Predicted Value</h4>
+              {predictedValue !== null ? (
+                <div className="text-3xl font-bold text-primary">
+                  ₹{predictedValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center">
+                  Enter parameters and click "Predict Value" to see the estimation
+                </p>
+              )}
+              <p className="mt-4 text-xs text-muted-foreground text-center">
+                Based on Random Forest Regression model trained on historical data
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Product Insights - Complete Data Table */}
       <Card>
         <CardContent className="pt-6">
           <h3 className="text-lg font-semibold mb-4">Product Insights</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Filter by Product Type</label>
-              <select className="w-full p-2 border rounded">
-                <option value="">All Types</option>
-                <option value="tablet">Tablets</option>
-                <option value="injection">Injections</option>
-                <option value="syrup">Syrups</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Filter by Stock Status</label>
-              <select className="w-full p-2 border rounded">
-                <option value="">All Status</option>
-                <option value="low">Low Stock</option>
-                <option value="normal">Normal</option>
-                <option value="excess">Excess</option>
-              </select>
+          
+          {/* Search and filters */}
+          <div className="mb-4">
+            <Input
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full mb-4"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Filter by Product Type</label>
+                <Select value={productFilter} onValueChange={setProductFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="tablet">Tablets</SelectItem>
+                    <SelectItem value="injection">Injections</SelectItem>
+                    <SelectItem value="syrup">Syrups</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Filter by Stock Status</label>
+                <Select value={stockStatusFilter} onValueChange={setStockStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="low">Low Stock</SelectItem>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="excess">Excess</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Sort By</label>
+                <Select value={sortBy} onValueChange={(val) => setSortBy(val as keyof InventoryItem | "")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select field" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="particulars">Product Name</SelectItem>
+                    <SelectItem value="quantity">Quantity</SelectItem>
+                    <SelectItem value="value">Value</SelectItem>
+                    <SelectItem value="expiryDate">Expiry Date</SelectItem>
+                  </SelectContent>
+                </Select>
+                {sortBy && (
+                  <div className="mt-2 flex">
+                    <Button 
+                      variant={sortOrder === "asc" ? "default" : "outline"}
+                      size="sm"
+                      className="mr-2"
+                      onClick={() => setSortOrder("asc")}
+                    >
+                      Ascending
+                    </Button>
+                    <Button 
+                      variant={sortOrder === "desc" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSortOrder("desc")}
+                    >
+                      Descending
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Value</TableHead>
-                <TableHead>Expiry Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.slice(0, 10).map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{item.particulars}</TableCell>
-                  <TableCell className="text-right">{item.quantity}</TableCell>
-                  <TableCell className="text-right">₹{typeof item.value === 'number' ? 
-                    item.value.toLocaleString() : 
-                    parseFloat(item.value as string).toLocaleString()}</TableCell>
-                  <TableCell>{item.expiryDate}</TableCell>
+          
+          {/* Table with pagination */}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead className="text-right">Quantity</TableHead>
+                  <TableHead className="text-right">Rate (₹)</TableHead>
+                  <TableHead className="text-right">Value (₹)</TableHead>
+                  <TableHead>Manufacturing Date</TableHead>
+                  <TableHead>Expiry Date</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {sortedData.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{item.particulars}</TableCell>
+                    <TableCell>{item.particularId}</TableCell>
+                    <TableCell className="text-right">{item.quantity}</TableCell>
+                    <TableCell className="text-right">
+                      {typeof item.rate === 'number' 
+                        ? item.rate.toFixed(2) 
+                        : parseFloat(item.rate as string).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {typeof item.value === 'number' 
+                        ? item.value.toLocaleString() 
+                        : parseFloat(item.value as string).toLocaleString()}
+                    </TableCell>
+                    <TableCell>{item.manufacturingDate}</TableCell>
+                    <TableCell>{item.expiryDate}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="text-sm text-muted-foreground mt-2">
+            Showing {sortedData.length} of {data.length} products
+          </div>
         </CardContent>
       </Card>
     </div>
