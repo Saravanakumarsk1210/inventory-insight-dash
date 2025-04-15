@@ -21,7 +21,7 @@ import { formatCurrency, calculateDaysUntilExpiry, getExpiryStatus } from "@/uti
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AnalyticsTab from "./AnalyticsTab";
+import { AnalyticsTab } from "./AnalyticsTab";
 import { ReorderingTab } from "./ReorderingTab";
 
 export function DashboardLayout() {
