@@ -7,10 +7,9 @@ const API_URL = 'http://localhost:3001';
 // Function to check server status
 export const checkServerStatus = async () => {
   try {
-    const response = await axios.get(API_URL, { timeout: 5000 });
+    const response = await axios.get(API_URL);
     return { isConnected: true, data: response.data };
   } catch (error) {
-    console.error('Server connection error:', error);
     return { isConnected: false, error };
   }
 };
@@ -26,13 +25,12 @@ export const uploadInventoryFiles = async (inventoryFile: File, minStockFile: Fi
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 10000, // 10-second timeout for large files
     });
     
     return response.data;
   } catch (error) {
     console.error('Error uploading files:', error);
-    throw new Error('Failed to upload inventory files to the server. Please check your server connection.');
+    throw error;
   }
 };
 
@@ -42,14 +40,12 @@ export const processInventoryFiles = async (inventoryFilePath: string, minStockF
     const response = await axios.post(`${API_URL}/process-inventory`, {
       inventoryFilePath,
       minStockFilePath
-    }, { 
-      timeout: 15000 // 15-second timeout for processing
     });
     
     return response.data;
   } catch (error) {
     console.error('Error processing inventory files:', error);
-    throw new Error('Failed to process inventory files on the server. Please check file formats and try again.');
+    throw error;
   }
 };
 
@@ -60,13 +56,11 @@ export const sendEmailAlert = async (recipientEmail: string, inventoryFilePath?:
       recipientEmail,
       inventoryFilePath,
       minStockFilePath
-    }, {
-      timeout: 30000 // 30-second timeout for email sending
     });
     
     return response.data;
   } catch (error) {
     console.error('Error sending email alert:', error);
-    throw new Error('Failed to send email alert. Please check recipient address and try again.');
+    throw error;
   }
 };
