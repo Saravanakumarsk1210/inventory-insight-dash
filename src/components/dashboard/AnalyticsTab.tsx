@@ -7,6 +7,7 @@ import {
 } from "recharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { InventoryItem } from "@/data/inventoryData";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface AnalyticsTabProps {
   data: InventoryItem[];
@@ -45,6 +46,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
       name: item.particulars.length > 15 
         ? `${item.particulars.substring(0, 15)}...` 
         : item.particulars,
+      particulars: item.particulars,
       currentStock,
       minStock,
       orderQuantity
@@ -83,7 +85,6 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
               <thead>
                 <tr>
                   <th className="px-4 py-2 text-left text-sm font-semibold">Product</th>
-                  <th className="px-4 py-2 text-left text-sm font-semibold">Batch</th>
                   <th className="px-4 py-2 text-left text-sm font-semibold">Expiry Date</th>
                   <th className="px-4 py-2 text-left text-sm font-semibold">Quantity</th>
                 </tr>
@@ -92,7 +93,6 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                 {expiringItems.map((item, index) => (
                   <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
                     <td className="px-4 py-2">{item.particulars}</td>
-                    <td className="px-4 py-2">{item.batch || '-'}</td>
                     <td className="px-4 py-2">{item.expiryDate || 'N/A'}</td>
                     <td className="px-4 py-2">{item.quantity}</td>
                   </tr>
@@ -103,27 +103,34 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
         </CardContent>
       </Card>
 
-      {/* Reorder Plan */}
+      {/* Reorder Plan - Changed to Table */}
       <Card>
         <CardContent className="pt-6">
           <h3 className="text-lg font-semibold mb-4">Reorder Plan</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart
-              data={reorderPlanData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 70 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" angle={-45} textAnchor="end" height={70} />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="orderQuantity" name="Order Quantity" fill="#ff7300" />
-            </BarChart>
-          </ResponsiveContainer>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Product</TableHead>
+                <TableHead className="text-right">Current Stock</TableHead>
+                <TableHead className="text-right">Minimum Stock</TableHead>
+                <TableHead className="text-right">Order Quantity</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {reorderPlanData.map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{item.particulars}</TableCell>
+                  <TableCell className="text-right">{item.currentStock}</TableCell>
+                  <TableCell className="text-right">{item.minStock}</TableCell>
+                  <TableCell className="text-right font-bold text-amber-600">{item.orderQuantity}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Product Insights */}
+      {/* Product Insights - Changed to Table with Filters */}
       <Card>
         <CardContent className="pt-6">
           <h3 className="text-lg font-semibold mb-4">Product Insights</h3>
@@ -147,38 +154,28 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
               </select>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart
-              data={data.slice(0, 10)}
-              margin={{ top: 5, right: 30, left: 20, bottom: 70 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="particulars" 
-                angle={-45} 
-                textAnchor="end" 
-                height={70}
-                tickFormatter={(value) => value.length > 10 ? `${value.substring(0, 10)}...` : value}
-              />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <Tooltip />
-              <Legend />
-              <Bar 
-                yAxisId="left" 
-                dataKey={(entry) => typeof entry.quantity === 'number' ? entry.quantity : parseInt(entry.quantity as string) || 0} 
-                name="Quantity" 
-                fill="#8884d8" 
-              />
-              <Line 
-                yAxisId="right" 
-                type="monotone" 
-                dataKey={(entry) => typeof entry.value === 'number' ? entry.value : parseFloat(entry.value as string) || 0} 
-                name="Value" 
-                stroke="#ff7300" 
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Product</TableHead>
+                <TableHead className="text-right">Quantity</TableHead>
+                <TableHead className="text-right">Value</TableHead>
+                <TableHead>Expiry Date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.slice(0, 10).map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{item.particulars}</TableCell>
+                  <TableCell className="text-right">{item.quantity}</TableCell>
+                  <TableCell className="text-right">₹{typeof item.value === 'number' ? 
+                    item.value.toLocaleString() : 
+                    parseFloat(item.value as string).toLocaleString()}</TableCell>
+                  <TableCell>{item.expiryDate}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
