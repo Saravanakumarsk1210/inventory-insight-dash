@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { InventoryItem } from "@/data/inventoryData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -223,8 +224,8 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="stock-insights" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <TabsContent value="stock-insights" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="col-span-full">
               <StockInsightsTab data={data} />
             </div>
@@ -250,10 +251,16 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
               <StockOverviewChart data={stockLevelsData} />
             </div>
             
-            <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-4">
-              <MonthlySalesChart data={monthlySalesData} />
-              <ExpiryRiskChart data={expiryRiskData} />
-              <ProductPerformanceChart data={productPerformanceData} />
+            <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="col-span-1">
+                <MonthlySalesChart data={monthlySalesData} />
+              </div>
+              <div className="col-span-1">
+                <ExpiryRiskChart data={expiryRiskData} />
+              </div>
+              <div className="col-span-1">
+                <ProductPerformanceChart data={productPerformanceData} />
+              </div>
             </div>
             
             <div className="col-span-full">
