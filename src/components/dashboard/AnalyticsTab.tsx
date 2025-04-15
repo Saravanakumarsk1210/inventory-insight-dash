@@ -146,7 +146,14 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
   });
 
   // Get unique product names for the prediction dropdown
-  const uniqueProducts = Array.from(new Set(data.map(item => item.particulars)));
+  // Filter out any empty strings or null values, ensure each product has a value
+  const uniqueProducts = Array.from(new Set(data.map(item => item.particulars)))
+    .filter(product => product && product.trim() !== "");
+
+  // If the uniqueProducts list is empty, add a default product to avoid errors
+  if (uniqueProducts.length === 0) {
+    uniqueProducts.push("Default Product");
+  }
 
   return (
     <div className="space-y-6">
@@ -239,8 +246,8 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {uniqueProducts.map((product, index) => (
-                      <SelectItem key={index} value={product || `product-${index}`}>
-                        {product || `Product ${index}`}
+                      <SelectItem key={index} value={product || `product-${index + 1}`}>
+                        {product || `Product ${index + 1}`}
                       </SelectItem>
                     ))}
                   </SelectContent>
