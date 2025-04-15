@@ -7,7 +7,6 @@ interface MonthlySalesChartProps {
   data: {
     month: string;
     sales: number;
-    stock?: number;
   }[];
 }
 
@@ -15,7 +14,7 @@ export function MonthlySalesChart({ data }: MonthlySalesChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Monthly Sales</CardTitle>
+        <CardTitle>Monthly Sales vs Stock</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -26,9 +25,6 @@ export function MonthlySalesChart({ data }: MonthlySalesChartProps) {
             <Tooltip />
             <Legend />
             <Line type="monotone" dataKey="sales" stroke="#8884d8" name="Sales" />
-            {data[0]?.stock !== undefined && 
-              <Line type="monotone" dataKey="stock" stroke="#82ca9d" name="Stock" />
-            }
           </LineChart>
         </ResponsiveContainer>
       </CardContent>
