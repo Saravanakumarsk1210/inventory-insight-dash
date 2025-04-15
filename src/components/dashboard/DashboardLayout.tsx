@@ -8,24 +8,21 @@ import {
   Activity,
   Search,
   BarChart3,
-  ShoppingCart,
-  TrendingUp,
-  AlertCircle
+  ShoppingCart
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { StatsCard } from "./StatsCard";
 import { InventoryTable } from "./InventoryTable";
 import { ExpiryTimeline } from "./ExpiryTimeline";
 import { ProductValueChart } from "./ProductValueChart";
 import { InventoryTypeDistribution } from "./InventoryTypeDistribution";
 import { InventoryItem, inventoryData } from "@/data/inventoryData";
-import { formatCurrency, calculateDaysUntilExpiry, getExpiryStatus, getUniqueProductNames } from "@/utils/formatters";
+import { formatCurrency, calculateDaysUntilExpiry, getExpiryStatus } from "@/utils/formatters";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AnalyticsTab from "./AnalyticsTab";
 import { ReorderingTab } from "./ReorderingTab";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function DashboardLayout() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,40 +46,23 @@ export function DashboardLayout() {
     let expiringCount = 0;
     let expiredCount = 0;
     let uniqueProducts = new Set();
-    let lowStockCount = 0;
-    let highValueCount = 0;
-    let totalItemsInLastMonth = 0;
     
     filteredData.forEach(item => {
       // Calculate total value
       if (typeof item.value === 'number') {
         totalValue += item.value;
-        if (item.value > 5000) {
-          highValueCount++;
-        }
       } else if (typeof item.value === 'string') {
-        const numValue = parseFloat(item.value) || 0;
-        totalValue += numValue;
-        if (numValue > 5000) {
-          highValueCount++;
-        }
+        totalValue += parseFloat(item.value) || 0;
       }
       
       // Calculate total quantity (if numeric)
       if (typeof item.quantity === 'number') {
         totalQuantity += item.quantity;
-        if (item.quantity < 10) {
-          lowStockCount++;
-        }
       } else if (typeof item.quantity === 'string') {
         // Try to extract numeric part from strings like "5654 amp"
         const matches = item.quantity.match(/^(\d+)/);
         if (matches && matches[1]) {
-          const qty = parseInt(matches[1]);
-          totalQuantity += qty;
-          if (qty < 10) {
-            lowStockCount++;
-          }
+          totalQuantity += parseInt(matches[1]);
         }
       }
       
@@ -96,11 +76,6 @@ export function DashboardLayout() {
         expiringCount++;
       }
       
-      // Count items added in the last month (simulated)
-      if (item.particularId.includes('22') || item.particularId.includes('23')) {
-        totalItemsInLastMonth++;
-      }
-      
       // Count unique products (base names)
       const productBaseName = item.particulars.split(' - ')[0];
       uniqueProducts.add(productBaseName);
@@ -112,10 +87,7 @@ export function DashboardLayout() {
       totalItems,
       expiringCount,
       expiredCount,
-      uniqueProductCount: uniqueProducts.size,
-      lowStockCount,
-      highValueCount,
-      totalItemsInLastMonth
+      uniqueProductCount: uniqueProducts.size
     };
   }, [filteredData]);
 
@@ -143,7 +115,7 @@ export function DashboardLayout() {
       </div>
       
       {/* Stats cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <StatsCard
           title="Total Inventory Value"
           value={formatCurrency(stats.totalValue)}
@@ -162,26 +134,7 @@ export function DashboardLayout() {
           icon={<Calendar />}
           className={stats.expiredCount > 0 ? "border-red-200 bg-red-50" : ""}
         />
-        <StatsCard
-          title="Low Stock Items"
-          value={stats.lowStockCount}
-          description="Products that need attention"
-          icon={<AlertCircle />}
-          className="border-yellow-200 bg-yellow-50"
-        />
       </div>
-      
-      {/* Additional Insights Alert */}
-      {stats.highValueCount > 0 && (
-        <Alert className="mb-6 border-indigo-200 bg-indigo-50">
-          <TrendingUp className="h-4 w-4" />
-          <AlertTitle>Inventory Insights</AlertTitle>
-          <AlertDescription>
-            You have {stats.highValueCount} high-value items (over ₹5,000) in your inventory worth {formatCurrency(stats.totalValue)}. 
-            {stats.totalItemsInLastMonth > 0 && ` There are ${stats.totalItemsInLastMonth} items added in the last month.`}
-          </AlertDescription>
-        </Alert>
-      )}
       
       {/* Tabbed Interface */}
       <Tabs defaultValue="overview" className="w-full mb-6">
