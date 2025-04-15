@@ -23,7 +23,7 @@ import { formatCurrency, calculateDaysUntilExpiry, getExpiryStatus, getUniquePro
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AnalyticsTab } from "./AnalyticsTab";
+import AnalyticsTab from "./AnalyticsTab";
 import { ReorderingTab } from "./ReorderingTab";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -230,4 +230,3 @@ export function DashboardLayout() {
     </div>
   );
 }
-
