@@ -146,9 +146,10 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
   });
 
   // Get unique product names for the prediction dropdown
-  // Filter out any empty strings or null values, ensure each product has a value
-  const uniqueProducts = Array.from(new Set(data.map(item => item.particulars)))
-    .filter(product => product && product.trim() !== "");
+  // Filter out any empty strings or null values, ensure each product has a valid value
+  const uniqueProducts = Array.from(new Set(
+    data.map(item => item.particulars).filter(name => name && name.trim() !== "")
+  ));
 
   // If the uniqueProducts list is empty, add a default product to avoid errors
   if (uniqueProducts.length === 0) {
@@ -192,13 +193,19 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {expiringItems.map((item, index) => (
-                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                    <td className="px-4 py-2">{item.particulars}</td>
-                    <td className="px-4 py-2">{item.expiryDate || 'N/A'}</td>
-                    <td className="px-4 py-2">{item.quantity}</td>
+                {expiringItems.length > 0 ? (
+                  expiringItems.map((item, index) => (
+                    <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                      <td className="px-4 py-2">{item.particulars}</td>
+                      <td className="px-4 py-2">{item.expiryDate || 'N/A'}</td>
+                      <td className="px-4 py-2">{item.quantity}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-2 text-center">No products expiring soon</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -219,14 +226,20 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {reorderPlanData.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{item.particulars}</TableCell>
-                  <TableCell className="text-right">{item.currentStock}</TableCell>
-                  <TableCell className="text-right">{item.minStock}</TableCell>
-                  <TableCell className="text-right font-bold text-amber-600">{item.orderQuantity}</TableCell>
+              {reorderPlanData.length > 0 ? (
+                reorderPlanData.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{item.particulars}</TableCell>
+                    <TableCell className="text-right">{item.currentStock}</TableCell>
+                    <TableCell className="text-right">{item.minStock}</TableCell>
+                    <TableCell className="text-right font-bold text-amber-600">{item.orderQuantity}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">No products need reordering</TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -246,8 +259,8 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {uniqueProducts.map((product, index) => (
-                      <SelectItem key={index} value={product || `product-${index + 1}`}>
-                        {product || `Product ${index + 1}`}
+                      <SelectItem key={index} value={product}>
+                        {product}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -389,25 +402,31 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedData.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{item.particulars}</TableCell>
-                    <TableCell>{item.particularId}</TableCell>
-                    <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell className="text-right">
-                      {typeof item.rate === 'number' 
-                        ? item.rate.toFixed(2) 
-                        : parseFloat(item.rate as string || '0').toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {typeof item.value === 'number' 
-                        ? item.value.toLocaleString() 
-                        : parseFloat(item.value as string || '0').toLocaleString()}
-                    </TableCell>
-                    <TableCell>{item.manufacturingDate}</TableCell>
-                    <TableCell>{item.expiryDate}</TableCell>
+                {sortedData.length > 0 ? (
+                  sortedData.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{item.particulars}</TableCell>
+                      <TableCell>{item.particularId}</TableCell>
+                      <TableCell className="text-right">{item.quantity}</TableCell>
+                      <TableCell className="text-right">
+                        {typeof item.rate === 'number' 
+                          ? item.rate.toFixed(2) 
+                          : parseFloat(item.rate as string || '0').toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {typeof item.value === 'number' 
+                          ? item.value.toLocaleString() 
+                          : parseFloat(item.value as string || '0').toLocaleString()}
+                      </TableCell>
+                      <TableCell>{item.manufacturingDate}</TableCell>
+                      <TableCell>{item.expiryDate}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center">No products found</TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
