@@ -1,20 +1,11 @@
 import { useMemo } from "react";
 import { InventoryItem } from "@/data/inventoryData";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart,
-  Area, Scatter, ScatterChart, ZAxis
+  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell
 } from "recharts";
-import { 
-  Lightbulb, TrendingUp, AlertTriangle, Calendar, 
-  ArrowUp, ArrowDown, Clock, BarChart3, Activity, 
-  Search, Filter, BadgeDollarSign, Package2, PieChart as PieChartIcon
-} from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { calculateDaysUntilExpiry, getExpiryStatus, formatCurrency } from "@/utils/formatters";
+import { Lightbulb, TrendingUp, AlertTriangle } from "lucide-react";
 
 interface AnalyticsTabProps {
   data: InventoryItem[];
@@ -149,7 +140,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
     
     return insights;
   }, [data]);
-
+  
   // Product categories distribution for strategic analysis
   const categoryDistribution = useMemo(() => {
     const categories: Record<string, { count: number, value: number }> = {};
@@ -189,196 +180,9 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
       value: data.value
     }));
   }, [data]);
-  
-  // NEW: Stock levels comparison (current vs minimum)
-  const stockLevelComparison = useMemo(() => {
-    // Get top products by quantity
-    const topProductsByQuantity = [...data]
-      .sort((a, b) => {
-        const quantityA = typeof a.quantity === 'number' 
-          ? a.quantity 
-          : parseInt(a.quantity.toString().match(/\d+/)?.[0] || '0');
-          
-        const quantityB = typeof b.quantity === 'number' 
-          ? b.quantity 
-          : parseInt(b.quantity.toString().match(/\d+/)?.[0] || '0');
-          
-        return quantityB - quantityA;
-      })
-      .slice(0, 10);
-    
-    // Generate comparison data with simulated minimum stock thresholds
-    return topProductsByQuantity.map(item => {
-      const currentStock = typeof item.quantity === 'number' 
-        ? item.quantity 
-        : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0');
-      
-      // Simulated minimum stock threshold (would come from real data in production)
-      const minimumStock = Math.round(currentStock * (0.3 + Math.random() * 0.4));
-      
-      // Simulated average monthly sales
-      const monthlySales = Math.round(minimumStock * (0.5 + Math.random() * 0.5));
-      
-      // Calculate reorder status
-      const stockStatus = currentStock < minimumStock ? 'low' : 'adequate';
-      
-      return {
-        name: item.particulars,
-        currentStock,
-        minimumStock,
-        monthlySales,
-        stockStatus,
-        stockDifference: currentStock - minimumStock,
-        runoutTime: Math.round(currentStock / (monthlySales || 1)) // in months
-      };
-    });
-  }, [data]);
-  
-  // NEW: Expiring products list
-  const expiryAlerts = useMemo(() => {
-    return data
-      .map(item => {
-        const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
-        const status = getExpiryStatus(daysUntilExpiry);
-        
-        return {
-          product: item.particulars,
-          batchNumber: item.particularId,
-          expiryDate: item.expiryDate,
-          daysUntilExpiry,
-          status,
-          quantity: typeof item.quantity === 'number' 
-            ? item.quantity 
-            : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0')
-        };
-      })
-      .filter(item => item.status === 'expired' || item.status === 'expiring-soon')
-      .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry)
-      .slice(0, 6);
-  }, [data]);
-  
-  // NEW: Product performance analysis
-  const productPerformance = useMemo(() => {
-    const productMap: Record<string, { 
-      totalValue: number, 
-      totalQuantity: number,
-      averageTurnover: number,
-      salesVelocity: number 
-    }> = {};
-    
-    // Group items by product name and calculate metrics
-    data.forEach(item => {
-      const productName = item.particulars.split(' - ')[0];
-      const value = typeof item.value === 'number' ? item.value : parseFloat(item.value.toString()) || 0;
-      const quantity = typeof item.quantity === 'number' 
-        ? item.quantity 
-        : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0');
-        
-      if (!productMap[productName]) {
-        // Simulate sales velocity and turnover with random values
-        productMap[productName] = {
-          totalValue: 0,
-          totalQuantity: 0,
-          // Simulated metrics (would be real in production)
-          averageTurnover: Math.round(Math.random() * 20) + 5, // days
-          salesVelocity: Math.round(Math.random() * 100) + 10  // units per month
-        };
-      }
-      
-      productMap[productName].totalValue += value;
-      productMap[productName].totalQuantity += quantity;
-    });
-    
-    // Convert to array and calculate performance categories
-    return Object.entries(productMap)
-      .map(([name, metrics]) => {
-        // Create a performance score based on value, quantity, turnover, and sales velocity
-        const valueScore = metrics.totalValue / 10000; // normalized by ₹10,000
-        const quantityScore = metrics.totalQuantity / 1000; // normalized by 1,000 units
-        const turnoverScore = 30 / metrics.averageTurnover; // faster turnover = higher score
-        const velocityScore = metrics.salesVelocity / 50; // normalized by 50 units per month
-        
-        // Weighted performance score
-        const performanceScore = (valueScore * 0.4) + (quantityScore * 0.1) + 
-                                (turnoverScore * 0.2) + (velocityScore * 0.3);
-        
-        // Classify products
-        let performance: 'high' | 'medium' | 'low';
-        if (performanceScore > 2) performance = 'high';
-        else if (performanceScore > 1) performance = 'medium';
-        else performance = 'low';
-        
-        return {
-          name,
-          totalValue: metrics.totalValue,
-          totalQuantity: metrics.totalQuantity,
-          averageTurnover: metrics.averageTurnover,
-          salesVelocity: metrics.salesVelocity,
-          performanceScore,
-          performance
-        };
-      })
-      .sort((a, b) => b.performanceScore - a.performanceScore);
-  }, [data]);
-  
-  // NEW: Advanced demand forecasting with multiple ML models
-  const demandForecast = useMemo(() => {
-    // Simulate multiple ML model forecasts for a top product
-    const topProduct = productPerformance[0];
-    if (!topProduct) return null;
-    
-    const currentMonth = new Date().getMonth();
-    const baselineSales = topProduct.salesVelocity;
-    
-    // Generate 6-month forecast using different simulated models
-    const forecastMonths = [];
-    for (let i = 0; i < 6; i++) {
-      const month = new Date(0, (currentMonth + i) % 12).toLocaleString('default', { month: 'short' });
-      
-      // Seasonal factor (higher in winter months)
-      const seasonalFactor = (currentMonth + i) % 12 >= 9 || (currentMonth + i) % 12 <= 2 ? 1.2 : 1.0;
-      
-      // Different model predictions
-      // 1. Moving average model (less responsive to seasonal changes)
-      const movingAvgPrediction = Math.round(baselineSales * (1 + (i * 0.03)) * (0.9 + Math.random() * 0.2));
-      
-      // 2. ARIMA-like model (more responsive to seasonal changes)
-      const arimaPrediction = Math.round(baselineSales * (1 + (i * 0.04)) * seasonalFactor * (0.85 + Math.random() * 0.3));
-      
-      // 3. ML-based model (most sophisticated with multiple factors)
-      const mlPrediction = Math.round(baselineSales * (1 + (i * 0.05)) * seasonalFactor * 
-        // Add simulated external factors like market trends, holidays, etc.
-        (1 + (Math.sin(i) * 0.15)) * (0.9 + Math.random() * 0.2));
-      
-      // Ensemble model (weighted average of the three models)
-      const ensemblePrediction = Math.round((movingAvgPrediction * 0.25) + 
-                                         (arimaPrediction * 0.35) + 
-                                         (mlPrediction * 0.4));
-      
-      forecastMonths.push({
-        month,
-        movingAvg: movingAvgPrediction,
-        arima: arimaPrediction,
-        ml: mlPrediction,
-        ensemble: ensemblePrediction
-      });
-    }
-    
-    return {
-      productName: topProduct.name,
-      currentSales: baselineSales,
-      forecastAccuracy: Math.round(70 + Math.random() * 15), // simulated accuracy percentage
-      forecastData: forecastMonths
-    };
-  }, [productPerformance]);
 
   // COLORS for charts
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe', '#00C49F'];
-  const EXPIRY_COLORS = {
-    'expired': '#f87171', // red
-    'expiring-soon': '#fcd34d', // amber
-    'good': '#4ade80', // green
-  };
 
   return (
     <div className="space-y-6">
@@ -387,85 +191,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
         Machine learning powered insights for inventory optimization and decision making
       </p>
       
-      {/* NEW: Stock Overview Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-blue-500" />
-            Stock Overview
-          </CardTitle>
-          <CardDescription>
-            Comparing current stock versus minimum required levels
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <div className="lg:col-span-3 h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={stockLevelComparison}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 120 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="name" 
-                    angle={-45} 
-                    textAnchor="end"
-                    height={120} 
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="currentStock" name="Current Stock" fill="#8884d8" />
-                  <Bar dataKey="minimumStock" name="Minimum Required" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            
-            <div className="lg:col-span-2">
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="text-base">Reorder Status</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Runout</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {stockLevelComparison.filter(item => item.stockStatus === 'low').map((item, i) => (
-                        <TableRow key={i}>
-                          <TableCell className="font-medium">{item.name.length > 20 ? `${item.name.substring(0, 20)}...` : item.name}</TableCell>
-                          <TableCell>
-                            <Badge variant={item.stockStatus === 'low' ? 'destructive' : 'outline'}>
-                              {item.stockStatus === 'low' ? 'Low Stock' : 'Adequate'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{item.runoutTime} mo.</TableCell>
-                        </TableRow>
-                      ))}
-                      {stockLevelComparison.filter(item => item.stockStatus === 'low').length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
-                            No products with low stock found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Sales Forecasting Section (Enhanced with multiple models) */}
+      {/* Sales Forecasting Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -534,240 +260,89 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
         </Card>
       </div>
       
-      {/* NEW: Advanced Demand Forecasting with Multiple ML Models */}
-      {demandForecast && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-indigo-500" />
-              Dynamic Demand Forecasting
-            </CardTitle>
-            <CardDescription>
-              Multi-model ML forecast for {demandForecast.productName} (Accuracy: {demandForecast.forecastAccuracy}%)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={demandForecast.forecastData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="movingAvg" name="Moving Average Model" stroke="#8884d8" strokeWidth={1} />
-                    <Line type="monotone" dataKey="arima" name="ARIMA Model" stroke="#82ca9d" strokeWidth={1} />
-                    <Line type="monotone" dataKey="ml" name="ML Model" stroke="#ffc658" strokeWidth={1} />
-                    <Line type="monotone" dataKey="ensemble" name="Ensemble Model (Recommended)" stroke="#ff8042" strokeWidth={2} activeDot={{ r: 8 }} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-              
-              <div>
-                <Card className="h-full">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Stock Runout Prediction</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm text-muted-foreground">Current Monthly Sales:</span>
-                        <span className="text-xl font-bold">{demandForecast.currentSales} units</span>
+      {/* Inventory Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {inventoryInsights.map((insight) => (
+          <Card key={insight.type}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {insight.type === 'overstocking' ? (
+                  <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                )}
+                {insight.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  {insight.products.map((product) => (
+                    <div key={product.name} className="flex items-center justify-between border-b pb-2">
+                      <div className="font-medium truncate max-w-[70%]">{product.name}</div>
+                      <div className="text-sm">
+                        QTY: {product.quantity}
                       </div>
-                      
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm text-muted-foreground">Predicted Peak Month:</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-bold">
-                            {demandForecast.forecastData.reduce((max, item) => 
-                              item.ensemble > max.value ? {month: item.month, value: item.ensemble} : max, 
-                              {month: '', value: 0}
-                            ).month}
-                          </span>
-                          <ArrowUp className="h-5 w-5 text-green-500" />
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm text-muted-foreground">6-Month Growth Trend:</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-bold">
-                            {Math.round(((demandForecast.forecastData[5].ensemble / demandForecast.forecastData[0].ensemble) - 1) * 100)}%
-                          </span>
-                          {demandForecast.forecastData[5].ensemble > demandForecast.forecastData[0].ensemble ? (
-                            <ArrowUp className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <ArrowDown className="h-5 w-5 text-red-500" />
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="pt-2">
-                        <Button size="sm" className="w-full">View Detailed Analysis</Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* NEW: Expiry Risk Monitor */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-orange-500" />
-            Expiry Risk Monitor
-          </CardTitle>
-          <CardDescription>
-            Timeline showing products by expiry date
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart
-                  margin={{ top: 20, right: 20, bottom: 10, left: 10 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    type="number" 
-                    dataKey="daysUntilExpiry" 
-                    name="Days Until Expiry"
-                    domain={[-30, 180]}
-                    label={{ value: 'Days Until Expiry', position: 'insideBottomRight', offset: -5 }}
-                  />
-                  <YAxis 
-                    type="number" 
-                    dataKey="quantity" 
-                    name="Quantity"
-                    label={{ value: 'Quantity', angle: -90, position: 'insideLeft' }} 
-                  />
-                  <ZAxis range={[60, 400]} />
-                  <Tooltip 
-                    cursor={{ strokeDasharray: '3 3' }}
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-background border border-border p-2 rounded-md shadow-md">
-                            <p className="font-medium">{data.product}</p>
-                            <p>Batch: {data.batchNumber}</p>
-                            <p>Expires: {data.expiryDate}</p>
-                            <p>Days left: <span className={
-                              data.status === 'expired' ? 'text-red-500 font-bold' : 
-                              data.status === 'expiring-soon' ? 'text-amber-500 font-bold' : 'text-green-500'
-                            }>{data.daysUntilExpiry}</span></p>
-                            <p>Quantity: {data.quantity}</p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Scatter
-                    name="Expiry Risk"
-                    data={expiryAlerts.concat(
-                      data
-                      .map(item => {
-                        const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
-                        if (daysUntilExpiry > 180) return null;
-                        const status = getExpiryStatus(daysUntilExpiry);
-                        
-                        return {
-                          product: item.particulars,
-                          batchNumber: item.particularId,
-                          expiryDate: item.expiryDate,
-                          daysUntilExpiry,
-                          status,
-                          quantity: typeof item.quantity === 'number' 
-                            ? item.quantity 
-                            : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0')
-                        };
-                      })
-                      .filter(Boolean)
-                      .slice(0, 30) // Limit to 30 items for performance
-                    )}
-                    fill={(entry) => EXPIRY_COLORS[entry.status as keyof typeof EXPIRY_COLORS] || '#000'}
-                  />
-                </ScatterChart>
-              </ResponsiveContainer>
-            </div>
-            
-            <Card className="h-[300px] overflow-auto">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-red-500" />
-                  Expiring Soon Alert
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {expiryAlerts.map((item, i) => (
-                    <div key={i} className="p-3 hover:bg-muted/50">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-medium text-sm">{item.product}</div>
-                          <div className="text-xs text-muted-foreground">{item.batchNumber}</div>
-                        </div>
-                        <Badge variant={item.status === 'expired' ? 'destructive' : 'outline'} className={item.status === 'expiring-soon' ? 'bg-amber-100 hover:bg-amber-100/80 text-amber-800 border-amber-200' : ''}>
-                          {item.status === 'expired' ? 'Expired' : `${item.daysUntilExpiry} days left`}
-                        </Badge>
-                      </div>
-                      
-                      {item.status === 'expired' && (
-                        <div className="mt-2 text-xs bg-red-50 text-red-700 p-1 rounded flex items-center">
-                          <AlertTriangle className="h-3 w-3 mr-1" /> Consider discounting or disposal
-                        </div>
-                      )}
-                      
-                      {item.status === 'expiring-soon' && item.daysUntilExpiry < 60 && (
-                        <div className="mt-2 text-xs bg-amber-50 text-amber-700 p-1 rounded flex items-center">
-                          <Lightbulb className="h-3 w-3 mr-1" /> Suggestion: Apply 10% discount
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
+                <p className="text-sm text-muted-foreground">{insight.recommendation}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
       
-      {/* Best & Worst Performing Products */}
+      {/* Category Distribution */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BadgeDollarSign className="h-5 w-5 text-green-500" />
-            Product Performance Analysis
-          </CardTitle>
-          <CardDescription>
-            Identifying best-selling and slow-moving inventory
-          </CardDescription>
+          <CardTitle>Product Category Analysis</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-base font-medium mb-3 flex items-center gap-1">
-                <ArrowUp className="h-4 w-4 text-green-500" />
-                Top Performing Products
-              </h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Turnover</TableHead>
-                    <TableHead>Sales</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {productPerformance
-                    .filter(product => product.performance === 'high')
-                    .slice(0, 5)
-                    .map((product, i) => (
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryDistribution}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={true}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={130}
+                    fill="#8884d8"
+                    dataKey="count"
+                  >
+                    {categoryDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => [`${value} items`, 'Count']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={categoryDistribution}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis type="category" dataKey="name" />
+                  <Tooltip formatter={(value) => [`${parseInt(String(value)).toLocaleString()} INR`, 'Value']} />
+                  <Legend />
+                  <Bar dataKey="value" name="Total Value" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
