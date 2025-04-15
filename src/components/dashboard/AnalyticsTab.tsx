@@ -1,841 +1,647 @@
 
-import { useMemo } from "react";
-import { InventoryItem } from "@/data/inventoryData";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart,
-  Area, Scatter, ScatterChart, ZAxis
+  Area, Scatter, ScatterChart, ZAxis, Brush, ReferenceLine
 } from "recharts";
-import { 
-  Lightbulb, TrendingUp, AlertTriangle, Calendar, 
-  ArrowUp, ArrowDown, Clock, BarChart3, Activity, 
-  Search, Filter, BadgeDollarSign, Package2, PieChart as PieChartIcon
-} from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InventoryItem } from "@/data/inventoryData";
+import { formatCurrency, calculateDaysUntilExpiry, getExpiryStatus, getUniqueProductNames } from "@/utils/formatters";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { calculateDaysUntilExpiry, getExpiryStatus, formatCurrency } from "@/utils/formatters";
+import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { 
+  Filter, Package2, Zap, TrendingUp, Calendar, AlertTriangle, 
+  ArrowDownRight, ArrowUpRight, ChevronDown, ChevronUp, Search,
+  BarChart3, Box, LineChart as LineChartIcon
+} from "lucide-react";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { StockInsightsTab } from "./StockInsightsTab";
 
 interface AnalyticsTabProps {
   data: InventoryItem[];
 }
 
-// Define colors for charts
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe', '#00C49F'];
-
 export function AnalyticsTab({ data }: AnalyticsTabProps) {
-  // ML-based Sales Forecasting (simulated)
-  const salesForecast = useMemo(() => {
-    // Group products by base name
-    const productGroups: Record<string, InventoryItem[]> = {};
-    data.forEach(item => {
-      const baseName = item.particulars.split(' - ')[0];
-      if (!productGroups[baseName]) {
-        productGroups[baseName] = [];
-      }
-      productGroups[baseName].push(item);
-    });
-
-    // Get top products by value for forecasting
-    const topProducts = Object.keys(productGroups)
-      .map(name => {
-        const items = productGroups[name];
-        const totalValue = items.reduce((sum, item) => {
-          return sum + (typeof item.value === 'number' ? item.value : parseFloat(item.value.toString()) || 0);
-        }, 0);
-        return { name, totalValue };
-      })
-      .sort((a, b) => b.totalValue - a.totalValue)
-      .slice(0, 5);
-
-    // Generate forecasted sales (simulated ML results)
-    return topProducts.map(product => {
-      // Simulate a trend with random variation (this would be ML-generated in real app)
-      const currentMonth = new Date().getMonth();
-      const forecastedValues = [];
-      
-      // Base value from product's total value
-      const baseValue = product.totalValue / 100;
-      
-      // Generate a 6-month forecast with increasing trend and seasonal factors
-      for (let i = 1; i <= 6; i++) {
-        const month = (currentMonth + i) % 12;
-        // Add seasonality (higher in winter months)
-        const seasonalFactor = month >= 9 || month <= 2 ? 1.2 : 1.0;
-        // Add growth trend
-        const growthFactor = 1 + (i * 0.05);
-        // Add some randomness
-        const random = 0.8 + Math.random() * 0.4;
-        
-        const value = Math.round(baseValue * seasonalFactor * growthFactor * random);
-        forecastedValues.push({
-          month: new Date(0, month).toLocaleString('default', { month: 'short' }),
-          value: value,
-        });
-      }
-
-      return {
-        name: product.name,
-        forecast: forecastedValues,
-        trend: forecastedValues[5].value > forecastedValues[0].value ? 'up' : 'down',
-        changePercent: Math.round(((forecastedValues[5].value / forecastedValues[0].value) - 1) * 100)
-      };
-    });
-  }, [data]);
+  const [activeTab, setActiveTab] = useState("stock-insights");
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+  const [predictedDays, setPredictedDays] = useState(30);
+  const [productFilter, setProductFilter] = useState<string>("all");
+  const [expiryFilter, setExpiryFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   
-  // ML-based Inventory Optimization Insights
-  const inventoryInsights = useMemo(() => {
-    // Simulate ML-based insights
-    const insights = [];
-    
-    // Get products with potential overstocking
-    const potentialOverstock = data
-      .filter(item => {
-        // Simple heuristic: high quantity + far from expiry
-        const qty = typeof item.quantity === 'number' 
-          ? item.quantity 
-          : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0');
-        
-        const expiryParts = item.expiryDate.split('-');
-        const expiryDate = new Date(
-          parseInt(expiryParts[2]), 
-          ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-            .indexOf(expiryParts[1].toLowerCase().substring(0, 3)),
-          parseInt(expiryParts[0])
-        );
-        
-        const monthsToExpiry = (expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30);
-        
-        return qty > 3000 && monthsToExpiry > 18;
-      })
-      .slice(0, 3);
-    
-    insights.push({
-      type: 'overstocking',
-      title: 'Potential Overstocking',
-      products: potentialOverstock.map(item => ({
-        name: item.particulars,
-        quantity: typeof item.quantity === 'number' 
-          ? item.quantity 
-          : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0'),
-        value: typeof item.value === 'number' ? item.value : parseFloat(item.value.toString()) || 0
-      })),
-      recommendation: 'Consider reducing order quantities for these items to optimize inventory costs.'
-    });
-    
-    // Potential stockout risk analysis
-    const stockoutRisk = data
-      .filter(item => {
-        // Simple heuristic: low quantity + popular product
-        const qty = typeof item.quantity === 'number' 
-          ? item.quantity 
-          : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0');
-        
-        const value = typeof item.value === 'number' ? item.value : parseFloat(item.value.toString()) || 0;
-        
-        return qty < 650 && value > 20000;
-      })
-      .slice(0, 3);
-    
-    insights.push({
-      type: 'stockout',
-      title: 'Stockout Risk',
-      products: stockoutRisk.map(item => ({
-        name: item.particulars,
-        quantity: typeof item.quantity === 'number' 
-          ? item.quantity 
-          : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0'),
-        value: typeof item.value === 'number' ? item.value : parseFloat(item.value.toString()) || 0
-      })),
-      recommendation: 'Place orders soon for these items to avoid potential stockouts.'
-    });
-    
-    return insights;
-  }, [data]);
-
-  // Product categories distribution for strategic analysis
-  const categoryDistribution = useMemo(() => {
-    const categories: Record<string, { count: number, value: number }> = {};
-    
-    // Categorize products by type/family
-    data.forEach(item => {
-      // Extract product category (simplified for demo)
-      let category;
-      if (item.particulars.toLowerCase().includes('tablet')) {
-        category = 'Tablets';
-      } else if (item.particulars.toLowerCase().includes('capsule')) {
-        category = 'Capsules';
-      } else if (item.particulars.toLowerCase().includes('inj')) {
-        category = 'Injections';
-      } else if (item.particulars.toLowerCase().includes('suspension')) {
-        category = 'Suspensions';
-      } else if (item.particulars.toLowerCase().includes('drops')) {
-        category = 'Drops';
-      } else {
-        category = 'Others';
+  // Calculate unique product names for filtering
+  const uniqueProductNames = useMemo(() => getUniqueProductNames(data), [data]);
+  
+  // Apply filters
+  const filteredData = useMemo(() => {
+    return data.filter(item => {
+      // Apply product filter
+      if (productFilter !== "all") {
+        const productName = item.particulars.split(" - ")[0].trim();
+        if (productName !== productFilter) return false;
       }
       
-      if (!categories[category]) {
-        categories[category] = { count: 0, value: 0 };
-      }
-      
-      categories[category].count += 1;
-      categories[category].value += typeof item.value === 'number' 
-        ? item.value 
-        : parseFloat(item.value.toString()) || 0;
-    });
-    
-    // Convert to array for chart
-    return Object.entries(categories).map(([name, data]) => ({
-      name,
-      count: data.count,
-      value: data.value
-    }));
-  }, [data]);
-  
-  // NEW: Stock levels comparison (current vs minimum)
-  const stockLevelComparison = useMemo(() => {
-    // Get top products by quantity
-    const topProductsByQuantity = [...data]
-      .sort((a, b) => {
-        const quantityA = typeof a.quantity === 'number' 
-          ? a.quantity 
-          : parseInt(a.quantity.toString().match(/\d+/)?.[0] || '0');
-          
-        const quantityB = typeof b.quantity === 'number' 
-          ? b.quantity 
-          : parseInt(b.quantity.toString().match(/\d+/)?.[0] || '0');
-          
-        return quantityB - quantityA;
-      })
-      .slice(0, 10);
-    
-    // Generate comparison data with simulated minimum stock thresholds
-    return topProductsByQuantity.map(item => {
-      const currentStock = typeof item.quantity === 'number' 
-        ? item.quantity 
-        : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0');
-      
-      // Simulated minimum stock threshold (would come from real data in production)
-      const minimumStock = Math.round(currentStock * (0.3 + Math.random() * 0.4));
-      
-      // Simulated average monthly sales
-      const monthlySales = Math.round(minimumStock * (0.5 + Math.random() * 0.5));
-      
-      // Calculate reorder status
-      const stockStatus = currentStock < minimumStock ? 'low' : 'adequate';
-      
-      return {
-        name: item.particulars,
-        currentStock,
-        minimumStock,
-        monthlySales,
-        stockStatus,
-        stockDifference: currentStock - minimumStock,
-        runoutTime: Math.round(currentStock / (monthlySales || 1)) // in months
-      };
-    });
-  }, [data]);
-  
-  // NEW: Expiring products list
-  const expiryAlerts = useMemo(() => {
-    return data
-      .map(item => {
+      // Apply expiry filter
+      if (expiryFilter !== "all") {
         const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
         const status = getExpiryStatus(daysUntilExpiry);
         
-        return {
-          product: item.particulars,
-          batchNumber: item.particularId,
-          expiryDate: item.expiryDate,
-          daysUntilExpiry,
-          status,
-          quantity: typeof item.quantity === 'number' 
-            ? item.quantity 
-            : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0')
-        };
-      })
-      .filter(item => item.status === 'expired' || item.status === 'expiring-soon')
-      .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry)
-      .slice(0, 6);
-  }, [data]);
-  
-  // NEW: Product performance analysis
-  const productPerformance = useMemo(() => {
-    const productMap: Record<string, { 
-      totalValue: number, 
-      totalQuantity: number,
-      averageTurnover: number,
-      salesVelocity: number 
-    }> = {};
-    
-    // Group items by product name and calculate metrics
-    data.forEach(item => {
-      const productName = item.particulars.split(' - ')[0];
-      const value = typeof item.value === 'number' ? item.value : parseFloat(item.value.toString()) || 0;
-      const quantity = typeof item.quantity === 'number' 
-        ? item.quantity 
-        : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0');
-        
-      if (!productMap[productName]) {
-        // Simulate sales velocity and turnover with random values
-        productMap[productName] = {
-          totalValue: 0,
-          totalQuantity: 0,
-          // Simulated metrics (would be real in production)
-          averageTurnover: Math.round(Math.random() * 20) + 5, // days
-          salesVelocity: Math.round(Math.random() * 100) + 10  // units per month
-        };
+        if (expiryFilter === "expired" && status !== "expired") return false;
+        if (expiryFilter === "expiring-soon" && status !== "expiring-soon") return false;
+        if (expiryFilter === "good" && status !== "good") return false;
       }
       
-      productMap[productName].totalValue += value;
-      productMap[productName].totalQuantity += quantity;
+      // Apply search filter
+      if (searchQuery) {
+        return item.particulars.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               item.particularId.toLowerCase().includes(searchQuery.toLowerCase());
+      }
+      
+      return true;
+    });
+  }, [data, productFilter, expiryFilter, searchQuery]);
+  
+  // Various data processing functions for charts
+  const calculateMonthlySales = (items: InventoryItem[]) => {
+    const monthlySales: { [month: string]: number } = {};
+    items.forEach(item => {
+      const expiryDate = new Date(item.expiryDate);
+      const monthYear = `${expiryDate.getMonth() + 1}-${expiryDate.getFullYear()}`;
+      monthlySales[monthYear] = (monthlySales[monthYear] || 0) + 1;
+    });
+    return Object.entries(monthlySales).map(([month, sales]) => ({ month, sales }));
+  };
+
+  const calculateExpiryRisk = (items: InventoryItem[]) => {
+    const expiryRisk: { [status: string]: number } = {
+      "expired": 0,
+      "expiring-soon": 0,
+      "good": 0
+    };
+
+    items.forEach(item => {
+      const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
+      const status = getExpiryStatus(daysUntilExpiry);
+      expiryRisk[status]++;
+    });
+
+    return Object.entries(expiryRisk).map(([status, count]) => ({ status, count }));
+  };
+
+  const calculateProductPerformance = (items: InventoryItem[]) => {
+    const productPerformance = new Map<string, { sold: number, expired: number }>();
+
+    items.forEach(item => {
+      const productName = item.particulars.split(' - ')[0];
+      if (!productPerformance.has(productName)) {
+        productPerformance.set(productName, { sold: 0, expired: 0 });
+      }
+
+      const performance = productPerformance.get(productName)!;
+      const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
+      const status = getExpiryStatus(daysUntilExpiry);
+
+      if (status === 'expired') {
+        performance.expired++;
+      } else {
+        performance.sold++;
+      }
+    });
+
+    return Array.from(productPerformance.entries())
+      .map(([name, { sold, expired }]) => ({ name, sold, expired }));
+  };
+
+  const predictStockLevels = (items: InventoryItem[], days: number) => {
+    // Simplified prediction: assume linear consumption
+    return items.map(item => ({
+      ...item,
+      predictedQuantity: Math.max(0, (typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity)) - (days / 30) * 10)
+    }));
+  };
+
+  // Calculate stock levels per product
+  const calculateStockLevels = (items: InventoryItem[]) => {
+    const stockLevels = new Map<string, { total: number, count: number }>();
+    
+    items.forEach(item => {
+      const productName = item.particulars.split(' - ')[0];
+      if (!stockLevels.has(productName)) {
+        stockLevels.set(productName, { total: 0, count: 0 });
+      }
+      
+      const stockInfo = stockLevels.get(productName)!;
+      
+      let quantity = 0;
+      if (typeof item.quantity === 'number') {
+        quantity = item.quantity;
+      } else {
+        const matches = item.quantity.match(/^(\d+)/);
+        if (matches && matches[1]) {
+          quantity = parseInt(matches[1]);
+        }
+      }
+      
+      stockInfo.total += quantity;
+      stockInfo.count += 1;
     });
     
-    // Convert to array and calculate performance categories
-    return Object.entries(productMap)
-      .map(([name, metrics]) => {
-        // Create a performance score based on value, quantity, turnover, and sales velocity
-        const valueScore = metrics.totalValue / 10000; // normalized by ₹10,000
-        const quantityScore = metrics.totalQuantity / 1000; // normalized by 1,000 units
-        const turnoverScore = 30 / metrics.averageTurnover; // faster turnover = higher score
-        const velocityScore = metrics.salesVelocity / 50; // normalized by 50 units per month
-        
-        // Weighted performance score
-        const performanceScore = (valueScore * 0.4) + (quantityScore * 0.1) + 
-                                (turnoverScore * 0.2) + (velocityScore * 0.3);
-        
-        // Classify products
-        let performance: 'high' | 'medium' | 'low';
-        if (performanceScore > 2) performance = 'high';
-        else if (performanceScore > 1) performance = 'medium';
-        else performance = 'low';
-        
-        return {
-          name,
-          totalValue: metrics.totalValue,
-          totalQuantity: metrics.totalQuantity,
-          averageTurnover: metrics.averageTurnover,
-          salesVelocity: metrics.salesVelocity,
-          performanceScore,
-          performance
-        };
-      })
-      .sort((a, b) => b.performanceScore - a.performanceScore);
-  }, [data]);
-  
-  // NEW: Advanced demand forecasting with multiple ML models
-  const demandForecast = useMemo(() => {
-    // Simulate multiple ML model forecasts for a top product
-    const topProduct = productPerformance[0];
-    if (!topProduct) return null;
+    return Array.from(stockLevels.entries())
+      .map(([name, { total, count }]) => ({ 
+        name, 
+        stock: total,
+        minThreshold: Math.round(total * 0.2), // Simulate min threshold as 20% of current stock
+        batches: count
+      }));
+  };
+
+  // Processed data for charts
+  const monthlySalesData = useMemo(() => calculateMonthlySales(filteredData), [filteredData]);
+  const expiryRiskData = useMemo(() => calculateExpiryRisk(filteredData), [filteredData]);
+  const productPerformanceData = useMemo(() => calculateProductPerformance(filteredData), [filteredData]);
+  const predictedStockData = useMemo(() => predictStockLevels(filteredData, predictedDays), [filteredData, predictedDays]);
+  const stockLevelsData = useMemo(() => calculateStockLevels(filteredData), [filteredData]);
+
+  // Get product-specific data when a product is selected
+  const selectedProductData = useMemo(() => {
+    if (!selectedProduct) return null;
     
-    const currentMonth = new Date().getMonth();
-    const baselineSales = topProduct.salesVelocity;
+    const productItems = filteredData.filter(item => 
+      item.particulars.split(' - ')[0] === selectedProduct
+    );
     
-    // Generate 6-month forecast using different simulated models
-    const forecastMonths = [];
-    for (let i = 0; i < 6; i++) {
-      const month = new Date(0, (currentMonth + i) % 12).toLocaleString('default', { month: 'short' });
+    const batches = productItems.length;
+    let totalQuantity = 0;
+    let totalValue = 0;
+    
+    productItems.forEach(item => {
+      if (typeof item.quantity === 'number') {
+        totalQuantity += item.quantity;
+      } else {
+        const matches = item.quantity.match(/^(\d+)/);
+        if (matches && matches[1]) {
+          totalQuantity += parseInt(matches[1]);
+        }
+      }
       
-      // Seasonal factor (higher in winter months)
-      const seasonalFactor = (currentMonth + i) % 12 >= 9 || (currentMonth + i) % 12 <= 2 ? 1.2 : 1.0;
-      
-      // Different model predictions
-      // 1. Moving average model (less responsive to seasonal changes)
-      const movingAvgPrediction = Math.round(baselineSales * (1 + (i * 0.03)) * (0.9 + Math.random() * 0.2));
-      
-      // 2. ARIMA-like model (more responsive to seasonal changes)
-      const arimaPrediction = Math.round(baselineSales * (1 + (i * 0.04)) * seasonalFactor * (0.85 + Math.random() * 0.3));
-      
-      // 3. ML-based model (most sophisticated with multiple factors)
-      const mlPrediction = Math.round(baselineSales * (1 + (i * 0.05)) * seasonalFactor * 
-        // Add simulated external factors like market trends, holidays, etc.
-        (1 + (Math.sin(i) * 0.15)) * (0.9 + Math.random() * 0.2));
-      
-      // Ensemble model (weighted average of the three models)
-      const ensemblePrediction = Math.round((movingAvgPrediction * 0.25) + 
-                                         (arimaPrediction * 0.35) + 
-                                         (mlPrediction * 0.4));
-      
-      forecastMonths.push({
-        month,
-        movingAvg: movingAvgPrediction,
-        arima: arimaPrediction,
-        ml: mlPrediction,
-        ensemble: ensemblePrediction
-      });
-    }
+      if (typeof item.value === 'number') {
+        totalValue += item.value;
+      } else if (typeof item.value === 'string') {
+        totalValue += parseFloat(item.value) || 0;
+      }
+    });
     
     return {
-      productName: topProduct.name,
-      currentSales: baselineSales,
-      forecastAccuracy: Math.round(70 + Math.random() * 15), // simulated accuracy percentage
-      forecastData: forecastMonths
+      name: selectedProduct,
+      batches,
+      totalQuantity,
+      totalValue,
+      items: productItems
     };
-  }, [productPerformance]);
+  }, [selectedProduct, filteredData]);
 
-  // COLORS for charts
-  const EXPIRY_COLORS = {
-    'expired': '#f87171', // red
-    'expiring-soon': '#fcd34d', // amber
-    'good': '#4ade80', // green
+  // Chart rendering functions
+  const renderMonthlySalesChart = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle>Monthly Sales vs Stock</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={monthlySalesData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="sales" stroke="#8884d8" name="Sales" />
+          </LineChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+
+  const renderExpiryRiskChart = () => {
+    const EXPIRY_COLORS = {
+      "expired": "#ef4444",
+      "expiring-soon": "#f97316", 
+      "good": "#10b981"
+    };
+    
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Expiry Risk Monitor</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                dataKey="count"
+                data={expiryRiskData}
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                fill="#8884d8"
+                label
+              >
+                {expiryRiskData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={EXPIRY_COLORS[entry.status]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+          
+          {/* Expiry suggestions */}
+          {expiryRiskData.find(item => item.status === "expiring-soon" && item.count > 0) && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <h4 className="font-medium flex items-center">
+                <AlertTriangle className="h-4 w-4 mr-2 text-yellow-600" />
+                Suggestion
+              </h4>
+              <p className="text-sm mt-1">
+                Consider applying discounts on {expiryRiskData.find(item => item.status === "expiring-soon")?.count} products 
+                nearing expiry to boost sales.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
   };
+
+  const renderProductPerformanceChart = () => {
+    const sortedData = [...productPerformanceData].sort((a, b) => b.sold - a.sold);
+    const top5Products = sortedData.slice(0, 5);
+  
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Best Performing Products</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={top5Products}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="sold" fill="#82ca9d" name="Sold" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderProductInsights = () => (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Filter className="h-5 w-5 mr-2" />
+            Product Insights
+          </div>
+          <div className="flex space-x-2">
+            <div className="relative w-[180px]">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search products..."
+                className="pl-8 pr-4 w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Select value={productFilter} onValueChange={setProductFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by product" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Products</SelectItem>
+                {uniqueProductNames.map(name => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={expiryFilter} onValueChange={setExpiryFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Expiry status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
+                <SelectItem value="expiring-soon">Expiring Soon</SelectItem>
+                <SelectItem value="good">Good</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {selectedProduct ? (
+          <div>
+            <div className="bg-slate-50 p-4 rounded-md mb-4">
+              <h3 className="text-lg font-semibold">{selectedProduct}</h3>
+              <div className="grid grid-cols-3 gap-4 mt-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Batches</p>
+                  <p className="text-xl font-medium">{selectedProductData?.batches}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Quantity</p>
+                  <p className="text-xl font-medium">{selectedProductData?.totalQuantity}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Value</p>
+                  <p className="text-xl font-medium">{formatCurrency(selectedProductData?.totalValue || 0)}</p>
+                </div>
+              </div>
+              
+              <Button variant="outline" className="mt-4" onClick={() => setSelectedProduct(null)}>
+                View All Products
+              </Button>
+            </div>
+            
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Batch ID</TableHead>
+                  <TableHead>Expiry Date</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Value</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {selectedProductData?.items.map((item) => (
+                  <TableRow key={item.particularId}>
+                    <TableCell>{item.particularId}</TableCell>
+                    <TableCell>{item.expiryDate}</TableCell>
+                    <TableCell>{item.quantity}</TableCell>
+                    <TableCell>{formatCurrency(typeof item.value === 'number' ? item.value : parseFloat(item.value) || 0)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Product Name</TableHead>
+                <TableHead>Batches</TableHead>
+                <TableHead>Current Stock</TableHead>
+                <TableHead>Min Threshold</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {stockLevelsData.map((product) => {
+                const isLowStock = product.stock <= product.minThreshold;
+                
+                return (
+                  <TableRow 
+                    key={product.name}
+                    className={isLowStock ? "bg-red-50" : ""}
+                    onClick={() => setSelectedProduct(product.name)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>{product.batches}</TableCell>
+                    <TableCell>{product.stock}</TableCell>
+                    <TableCell>{product.minThreshold}</TableCell>
+                    <TableCell>
+                      <div className={`flex items-center ${isLowStock ? "text-red-600" : "text-green-600"}`}>
+                        {isLowStock ? (
+                          <>
+                            <ArrowDownRight className="h-4 w-4 mr-1" />
+                            Low Stock
+                          </>
+                        ) : (
+                          <>
+                            <ArrowUpRight className="h-4 w-4 mr-1" />
+                            Sufficient
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+  
+  const renderStockOverviewChart = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle>Stock Overview</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={stockLevelsData.slice(0, 10)}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="stock" fill="#82ca9d" name="Current Stock" />
+            <Bar dataKey="minThreshold" fill="#ff7373" name="Min Threshold" />
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+
+  const renderPredictedStockTable = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle>Predicted Stock Levels</CardTitle>
+      </CardHeader>
+      <CardContent className="overflow-x-auto">
+        <div className="mb-4">
+          <label htmlFor="predictionDays" className="block text-sm font-medium text-gray-700 mb-2">
+            Prediction Horizon: {predictedDays} days
+          </label>
+          <Slider
+            id="predictionDays"
+            defaultValue={[30]}
+            value={[predictedDays]}
+            max={365}
+            step={7}
+            onValueChange={(value) => setPredictedDays(value[0])}
+            className="max-w-md"
+          />
+        </div>
+        
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>Current Quantity</TableHead>
+              <TableHead>Predicted Quantity</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {predictedStockData.map(item => {
+              const currentQty = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 0;
+              const predictedQty = item.predictedQuantity || 0;
+              const isRunningOut = predictedQty <= 0;
+              
+              return (
+                <TableRow key={item.particularId}>
+                  <TableCell>{item.particulars}</TableCell>
+                  <TableCell>{currentQty}</TableCell>
+                  <TableCell>{predictedQty.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <span className={isRunningOut ? "text-red-600 font-medium" : "text-green-600"}>
+                      {isRunningOut ? "Stock Out Risk" : "Sufficient"}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Advanced Analytics</h2>
-      <p className="text-muted-foreground">
-        Machine learning powered insights for inventory optimization and decision making
-      </p>
-      
-      {/* NEW: Stock Overview Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-blue-500" />
-            Stock Overview
-          </CardTitle>
-          <CardDescription>
-            Comparing current stock versus minimum required levels
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <div className="lg:col-span-3 h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={stockLevelComparison}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 120 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="name" 
-                    angle={-45} 
-                    textAnchor="end"
-                    height={120} 
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="currentStock" name="Current Stock" fill="#8884d8" />
-                  <Bar dataKey="minimumStock" name="Minimum Required" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            
-            <div className="lg:col-span-2">
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="text-base">Reorder Status</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Runout</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {stockLevelComparison.filter(item => item.stockStatus === 'low').map((item, i) => (
-                        <TableRow key={i}>
-                          <TableCell className="font-medium">{item.name.length > 20 ? `${item.name.substring(0, 20)}...` : item.name}</TableCell>
-                          <TableCell>
-                            <Badge variant={item.stockStatus === 'low' ? 'destructive' : 'outline'}>
-                              {item.stockStatus === 'low' ? 'Low Stock' : 'Adequate'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{item.runoutTime} mo.</TableCell>
-                        </TableRow>
-                      ))}
-                      {stockLevelComparison.filter(item => item.stockStatus === 'low').length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
-                            No products with low stock found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Sales Forecasting Section (Enhanced with multiple models) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-blue-500" />
-              Sales Forecast - Next 6 Months
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="month" 
-                    allowDuplicatedCategory={false} 
-                  />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  {salesForecast.map((product, index) => (
-                    <Line
-                      key={product.name}
-                      data={product.forecast}
-                      name={product.name}
-                      type="monotone"
-                      dataKey="value"
-                      stroke={COLORS[index % COLORS.length]}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Sub-tabs within Analytics */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full max-w-lg grid-cols-3 mb-6">
+          <TabsTrigger value="stock-insights" className="flex items-center">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Stock Insights
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="flex items-center">
+            <LineChartIcon className="h-4 w-4 mr-2" />
+            Performance
+          </TabsTrigger>
+          <TabsTrigger value="forecasting" className="flex items-center">
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Forecasting
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Stock Insights Tab */}
+        <TabsContent value="stock-insights">
+          <StockInsightsTab data={data} />
+        </TabsContent>
         
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-yellow-500" />
-              Trending Products
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {salesForecast.map((product) => (
-                <div key={product.name} className="flex items-center justify-between border-b pb-2">
-                  <div>
-                    <div className="font-medium">{product.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {product.trend === 'up' ? 'Increasing' : 'Decreasing'} trend
-                    </div>
-                  </div>
-                  <div className={`flex items-center ${product.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-                    {product.trend === 'up' ? '+' : '-'}{Math.abs(product.changePercent)}%
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* NEW: Advanced Demand Forecasting with Multiple ML Models */}
-      {demandForecast && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-indigo-500" />
-              Dynamic Demand Forecasting
-            </CardTitle>
-            <CardDescription>
-              Multi-model ML forecast for {demandForecast.productName} (Accuracy: {demandForecast.forecastAccuracy}%)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={demandForecast.forecastData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="movingAvg" name="Moving Average Model" stroke="#8884d8" strokeWidth={1} />
-                    <Line type="monotone" dataKey="arima" name="ARIMA Model" stroke="#82ca9d" strokeWidth={1} />
-                    <Line type="monotone" dataKey="ml" name="ML Model" stroke="#ffc658" strokeWidth={1} />
-                    <Line type="monotone" dataKey="ensemble" name="Ensemble Model (Recommended)" stroke="#ff8042" strokeWidth={2} activeDot={{ r: 8 }} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-              
-              <div>
-                <Card className="h-full">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Stock Runout Prediction</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm text-muted-foreground">Current Monthly Sales:</span>
-                        <span className="text-xl font-bold">{demandForecast.currentSales} units</span>
-                      </div>
-                      
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm text-muted-foreground">Predicted Peak Month:</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-bold">
-                            {demandForecast.forecastData.reduce((max, item) => 
-                              item.ensemble > max.value ? {month: item.month, value: item.ensemble} : max, 
-                              {month: '', value: 0}
-                            ).month}
-                          </span>
-                          <ArrowUp className="h-5 w-5 text-green-500" />
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm text-muted-foreground">6-Month Growth Trend:</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-bold">
-                            {Math.round(((demandForecast.forecastData[5].ensemble / demandForecast.forecastData[0].ensemble) - 1) * 100)}%
-                          </span>
-                          {demandForecast.forecastData[5].ensemble > demandForecast.forecastData[0].ensemble ? (
-                            <ArrowUp className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <ArrowDown className="h-5 w-5 text-red-500" />
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="pt-2">
-                        <Button size="sm" className="w-full">View Detailed Analysis</Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* NEW: Expiry Risk Monitor */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-orange-500" />
-            Expiry Risk Monitor
-          </CardTitle>
-          <CardDescription>
-            Timeline showing products by expiry date
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart
-                  margin={{ top: 20, right: 20, bottom: 10, left: 10 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    type="number" 
-                    dataKey="daysUntilExpiry" 
-                    name="Days Until Expiry"
-                    domain={[-30, 180]}
-                    label={{ value: 'Days Until Expiry', position: 'insideBottomRight', offset: -5 }}
-                  />
-                  <YAxis 
-                    type="number" 
-                    dataKey="quantity" 
-                    name="Quantity"
-                    label={{ value: 'Quantity', angle: -90, position: 'insideLeft' }} 
-                  />
-                  <ZAxis range={[60, 400]} />
-                  <Tooltip 
-                    cursor={{ strokeDasharray: '3 3' }}
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-background border border-border p-2 rounded-md shadow-md">
-                            <p className="font-medium">{data.product}</p>
-                            <p>Batch: {data.batchNumber}</p>
-                            <p>Expires: {data.expiryDate}</p>
-                            <p>Days left: <span className={
-                              data.status === 'expired' ? 'text-red-500 font-bold' : 
-                              data.status === 'expiring-soon' ? 'text-amber-500 font-bold' : 'text-green-500'
-                            }>{data.daysUntilExpiry}</span></p>
-                            <p>Quantity: {data.quantity}</p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Scatter
-                    name="Expiry Risk"
-                    data={data
-                      .map(item => {
-                        const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
-                        if (daysUntilExpiry > 180) return null;
-                        const status = getExpiryStatus(daysUntilExpiry);
-                        
-                        return {
-                          product: item.particulars,
-                          batchNumber: item.particularId,
-                          expiryDate: item.expiryDate,
-                          daysUntilExpiry,
-                          status,
-                          quantity: typeof item.quantity === 'number' 
-                            ? item.quantity 
-                            : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0')
-                        };
-                      })
-                      .filter(Boolean)
-                      .slice(0, 30) // Limit to 30 items for performance
-                    }
-                    fill="#8884d8"
-                  >
-                    {data
-                      .map(item => {
-                        const daysUntilExpiry = calculateDaysUntilExpiry(item.expiryDate);
-                        if (daysUntilExpiry > 180) return null;
-                        const status = getExpiryStatus(daysUntilExpiry);
-                        
-                        return {
-                          status,
-                          index: Math.random() // Just for unique keys
-                        };
-                      })
-                      .filter(Boolean)
-                      .slice(0, 30)
-                      .map((item, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={EXPIRY_COLORS[item.status as keyof typeof EXPIRY_COLORS] || '#8884d8'} 
-                        />
-                      ))}
-                  </Scatter>
-                </ScatterChart>
-              </ResponsiveContainer>
-            </div>
-            
-            <Card className="h-[300px] overflow-auto">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-red-500" />
-                  Expiring Soon Alert
-                </CardTitle>
+        {/* Performance Tab */}
+        <TabsContent value="performance">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Performance Analysis</CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {expiryAlerts.map((item, i) => (
-                    <div key={i} className="p-3 hover:bg-muted/50">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-medium text-sm">{item.product}</div>
-                          <div className="text-xs text-muted-foreground">{item.batchNumber}</div>
-                        </div>
-                        <Badge variant={item.status === 'expired' ? 'destructive' : 'outline'} className={item.status === 'expiring-soon' ? 'bg-amber-100 hover:bg-amber-100/80 text-amber-800 border-amber-200' : ''}>
-                          {item.status === 'expired' ? 'Expired' : `${item.daysUntilExpiry} days left`}
-                        </Badge>
-                      </div>
-                      
-                      {item.status === 'expired' && (
-                        <div className="mt-2 text-xs bg-red-50 text-red-700 p-1 rounded flex items-center">
-                          <AlertTriangle className="h-3 w-3 mr-1" /> Consider discounting or disposal
-                        </div>
-                      )}
-                      
-                      {item.status === 'expiring-soon' && item.daysUntilExpiry < 60 && (
-                        <div className="mt-2 text-xs bg-amber-50 text-amber-700 p-1 rounded flex items-center">
-                          <Lightbulb className="h-3 w-3 mr-1" /> Suggestion: Apply 10% discount
-                        </div>
-                      )}
-                    </div>
-                  ))}
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Select products to view their performance metrics and analytics.
+                </p>
+                
+                <div className="flex mt-4 space-x-4">
+                  <Select>
+                    <SelectTrigger className="w-56">
+                      <SelectValue placeholder="Select a product" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {uniqueProductNames.map(name => (
+                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button>View Performance</Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-muted/50">
+              <CardHeader>
+                <CardTitle className="text-muted-foreground">Select a product to view performance analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center min-h-[300px]">
+                <div className="flex flex-col items-center">
+                  <Box className="h-12 w-12 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">No product selected</p>
                 </div>
               </CardContent>
             </Card>
           </div>
-        </CardContent>
-      </Card>
-      
-      {/* Best & Worst Performing Products */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BadgeDollarSign className="h-5 w-5 text-green-500" />
-            Product Performance Analysis
-          </CardTitle>
-          <CardDescription>
-            Identifying best-selling and slow-moving inventory
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-base font-medium mb-3 flex items-center gap-1">
-                <ArrowUp className="h-4 w-4 text-green-500" />
-                Top Performing Products
-              </h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Turnover</TableHead>
-                    <TableHead>Sales</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {productPerformance
-                    .filter(product => product.performance === 'high')
-                    .slice(0, 5)
-                    .map((product, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>{formatCurrency(product.totalValue)}</TableCell>
-                        <TableCell>{product.averageTurnover} days</TableCell>
-                        <TableCell>{product.salesVelocity}/mo</TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </div>
+        </TabsContent>
+        
+        {/* Forecasting Tab */}
+        <TabsContent value="forecasting">
+          <div className="space-y-6">
+            {/* ML Models Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>ML Models</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Use our ML models to predict stock levels and optimize your inventory.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center mb-2">
+                      <Zap className="h-5 w-5 mr-2 text-purple-500" />
+                      <h4 className="font-medium">XGBoost Stock Prediction</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Predicts future stock levels based on historical consumption patterns.
+                    </p>
+                    <Button onClick={() => alert('Running XGBoost model...')}>
+                      Run Prediction
+                    </Button>
+                  </div>
+                  
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center mb-2">
+                      <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
+                      <h4 className="font-medium">ARIMA Forecasting</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Time series analysis to forecast demand patterns and trends.
+                    </p>
+                    <Button onClick={() => alert('Running ARIMA model...')}>
+                      Run Forecast
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
             
-            <div>
-              <h3 className="text-base font-medium mb-3 flex items-center gap-1">
-                <ArrowDown className="h-4 w-4 text-red-500" />
-                Slow-Moving Products
-              </h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Turnover</TableHead>
-                    <TableHead>Sales</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {productPerformance
-                    .filter(product => product.performance === 'low')
-                    .slice(0, 5)
-                    .map((product, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>{formatCurrency(product.totalValue)}</TableCell>
-                        <TableCell>{product.averageTurnover} days</TableCell>
-                        <TableCell>{product.salesVelocity}/mo</TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </div>
+            <Card className="bg-muted/50">
+              <CardHeader>
+                <CardTitle className="text-muted-foreground">Run a forecast model to view predictions</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center min-h-[300px]">
+                <div className="flex flex-col items-center">
+                  <TrendingUp className="h-12 w-12 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">No forecast data available</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+
+export default AnalyticsTab;
