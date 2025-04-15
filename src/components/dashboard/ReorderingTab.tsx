@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { InventoryItem } from "@/data/inventoryData";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -20,6 +21,7 @@ interface ReorderingTabProps {
   data: InventoryItem[];
 }
 
+// Interface for the low stock item
 interface LowStockItem {
   product: string;
   packing: string;
@@ -57,18 +59,21 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
     },
   });
 
+  // Handle inventory file upload
   const handleInventoryFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setUploadedInventoryFile(e.target.files[0]);
     }
   };
 
+  // Handle minimum stock file upload
   const handleMinStockFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setUploadedMinStockFile(e.target.files[0]);
     }
   };
 
+  // Check if backend server is running
   const handleCheckServerStatus = async () => {
     try {
       const response = await checkServerStatus();
@@ -97,6 +102,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
     }
   };
 
+  // Upload files to the server
   const uploadFiles = async () => {
     if (!uploadedInventoryFile || !uploadedMinStockFile) {
       toast({
@@ -142,11 +148,14 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
     }
   };
 
+  // Process inventory data - now uses uploaded files when available
   const processInventory = async () => {
     setIsProcessing(true);
     
+    // Check if real files should be processed
     if (uploadStatus === "success" && serverConnected && uploadedFileNames.inventory && uploadedFileNames.minStock) {
       try {
+        // Process the uploaded files using the backend
         const response = await processInventoryFiles(
           uploadedFileNames.inventory,
           uploadedFileNames.minStock
@@ -174,34 +183,31 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
           description: "An error occurred while processing inventory files.",
           variant: "destructive",
         });
-        simulateProcessing();
       } finally {
         setIsProcessing(false);
       }
-    } else if (uploadedInventoryFile && uploadedMinStockFile && !serverConnected) {
-      toast({
-        title: "Server Not Connected",
-        description: "Please connect to the server before processing files.",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
     } else {
+      // Fallback to simulated data when files aren't uploaded or server isn't connected
       simulateProcessing();
     }
   };
 
+  // Simulate processing (as fallback)
   const simulateProcessing = () => {
     setTimeout(() => {
+      // Generate simulated low stock data based on the current inventory
       const simulatedLowStock: LowStockItem[] = data
         .filter(item => {
+          // Example logic to identify items with low stock
           const quantity = typeof item.quantity === 'number' 
             ? item.quantity 
             : parseInt(item.quantity.toString().match(/\d+/)?.[0] || '0');
           
+          // Random threshold for demo purposes
           const randomThreshold = Math.floor(Math.random() * 1000) + 2000;
           return quantity < randomThreshold;
         })
-        .slice(0, 8)
+        .slice(0, 8) // Limit to 8 items for demo
         .map(item => {
           const quantity = typeof item.quantity === 'number' 
             ? item.quantity 
@@ -232,6 +238,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
     }, 2000);
   };
 
+  // Send email alert - now connects to the Python script through the backend
   const handleSendEmailAlert = async () => {
     if (lowStockItems.length === 0) {
       toast({
@@ -242,6 +249,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
       return;
     }
     
+    // Check if recipient email is provided
     const recipientEmail = form.getValues().recipientEmail;
     if (!recipientEmail) {
       toast({
@@ -252,17 +260,20 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
       return;
     }
 
+    // Show the email sending dialog
     setShowEmailDialog(true);
     setIsEmailSending(true);
     setEmailSendStatus("sending");
     
     try {
+      // First stage - connecting to email service
       toast({
         title: "Connecting to Email Service",
         description: "Establishing connection to the email server...",
         variant: "default",
       });
       
+      // Send the actual email using the backend service
       const response = await sendEmailAlert(
         recipientEmail,
         uploadedFileNames.inventory,
@@ -328,6 +339,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
         </div>
       </div>
       
+      {/* Configuration Form */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -470,6 +482,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
         </CardContent>
       </Card>
       
+      {/* Low Stock Items Table */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -520,6 +533,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
         </CardContent>
       </Card>
       
+      {/* Email Preview */}
       {lowStockItems.length > 0 && (
         <Card>
           <CardHeader>
@@ -586,6 +600,7 @@ export function ReorderingTab({ data }: ReorderingTabProps) {
         </Card>
       )}
 
+      {/* Email Sending Dialog */}
       <Dialog open={showEmailDialog} onOpenChange={closeEmailDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

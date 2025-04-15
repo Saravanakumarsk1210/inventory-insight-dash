@@ -9,9 +9,6 @@ export interface InventoryItem {
   quantity: string | number;
   rate: string | number;
   value: string | number;
-  monthlyAvgSales?: number;
-  orderQuantity?: number;
-  minimumStock?: number;
 }
 
 export const inventoryData: InventoryItem[] = [
@@ -24,10 +21,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 4979,
     rate: 12.21,
-    value: 60793.59,
-    monthlyAvgSales: 1328,
-    orderQuantity: 3000,
-    minimumStock: 1000
+    value: 60793.59
   },
   {
     id: "2",
@@ -38,10 +32,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 648,
     rate: 15.25,
-    value: 9882,
-    monthlyAvgSales: 658,
-    orderQuantity: 4000,
-    minimumStock: 1200
+    value: 9882
   },
   {
     id: "3",
@@ -52,10 +43,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 4826,
     rate: 15.25,
-    value: 73596.5,
-    monthlyAvgSales: 658,
-    orderQuantity: 4000,
-    minimumStock: 1200
+    value: 73596.5
   },
   {
     id: "4",
@@ -66,10 +54,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 2420,
     rate: 16.71,
-    value: 40448.19,
-    monthlyAvgSales: 39,
-    orderQuantity: 1000,
-    minimumStock: 150
+    value: 40448.19
   },
   {
     id: "5",
@@ -80,10 +65,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 12,
     rate: 9,
-    value: 108,
-    monthlyAvgSales: 199,
-    orderQuantity: 1500,
-    minimumStock: 400
+    value: 108
   },
   {
     id: "6",
@@ -94,10 +76,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 4000,
     rate: 75,
-    value: 300000,
-    monthlyAvgSales: 57,
-    orderQuantity: 500,
-    minimumStock: 100
+    value: 300000
   },
   {
     id: "7",
@@ -108,10 +87,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 1,
     rate: 88.33,
-    value: 88.33,
-    monthlyAvgSales: 57,
-    orderQuantity: 500,
-    minimumStock: 100
+    value: 88.33
   },
   {
     id: "8",
@@ -122,10 +98,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 118,
     rate: 88.61,
-    value: 10455.98,
-    monthlyAvgSales: 57,
-    orderQuantity: 500,
-    minimumStock: 100
+    value: 10455.98
   },
   {
     id: "9",
@@ -136,10 +109,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 1165,
     rate: 16,
-    value: 18640,
-    monthlyAvgSales: 38,
-    orderQuantity: 500,
-    minimumStock: 150
+    value: 18640
   },
   {
     id: "10",
@@ -150,10 +120,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 7035,
     rate: 8.58,
-    value: 60349.54,
-    monthlyAvgSales: 90,
-    orderQuantity: 950,
-    minimumStock: 200
+    value: 60349.54
   },
   {
     id: "11",
@@ -164,10 +131,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 1450,
     rate: 12,
-    value: 17400,
-    monthlyAvgSales: 23,
-    orderQuantity: 500,
-    minimumStock: 100
+    value: 17400
   },
   {
     id: "12",
@@ -178,10 +142,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 1,
     rate: 11.46,
-    value: 11.46,
-    monthlyAvgSales: 23,
-    orderQuantity: 500,
-    minimumStock: 100
+    value: 11.46
   },
   {
     id: "13",
@@ -192,10 +153,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 330,
     rate: 0,
-    value: 0,
-    monthlyAvgSales: 23,
-    orderQuantity: 500,
-    minimumStock: 100
+    value: 0
   },
   {
     id: "14",
@@ -206,10 +164,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 725,
     rate: 15,
-    value: 10875,
-    monthlyAvgSales: 23,
-    orderQuantity: 500,
-    minimumStock: 100
+    value: 10875
   },
   {
     id: "15",
@@ -220,10 +175,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 2880,
     rate: 10.5,
-    value: 30240,
-    monthlyAvgSales: 79,
-    orderQuantity: 1000,
-    minimumStock: 200
+    value: 30240
   },
   {
     id: "16",
@@ -234,10 +186,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 3830,
     rate: 12,
-    value: 45960,
-    monthlyAvgSales: 110,
-    orderQuantity: 1000,
-    minimumStock: 200
+    value: 45960
   },
   {
     id: "17",
@@ -248,10 +197,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 78,
     rate: 31,
-    value: 2418,
-    monthlyAvgSales: 0,
-    orderQuantity: 0,
-    minimumStock: 0
+    value: 2418
   },
   {
     id: "18",
@@ -262,10 +208,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: "5654 amp",
     rate: 14,
-    value: 79156,
-    monthlyAvgSales: 500,
-    orderQuantity: 10000,
-    minimumStock: 1200
+    value: 79156
   },
   {
     id: "19",
@@ -276,10 +219,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: "2155 amp",
     rate: 19,
-    value: 40945,
-    monthlyAvgSales: 966,
-    orderQuantity: 10000,
-    minimumStock: 2500
+    value: 40945
   },
   {
     id: "20",
@@ -290,10 +230,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 812,
     rate: 15.5,
-    value: 12586,
-    monthlyAvgSales: 45,
-    orderQuantity: 1000,
-    minimumStock: 200
+    value: 12586
   },
   {
     id: "21",
@@ -304,10 +241,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 4852,
     rate: 15.5,
-    value: 75206,
-    monthlyAvgSales: 45,
-    orderQuantity: 1000,
-    minimumStock: 200
+    value: 75206
   },
   {
     id: "22",
@@ -318,10 +252,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 3250,
     rate: 17.91,
-    value: 58193.79,
-    monthlyAvgSales: 44,
-    orderQuantity: 700,
-    minimumStock: 700
+    value: 58193.79
   },
   {
     id: "23",
@@ -332,10 +263,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 4975,
     rate: 22,
-    value: 109450,
-    monthlyAvgSales: 69,
-    orderQuantity: 1000,
-    minimumStock: 300
+    value: 109450
   },
   {
     id: "24",
@@ -346,10 +274,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 425,
     rate: 23,
-    value: 9775,
-    monthlyAvgSales: 69,
-    orderQuantity: 1000,
-    minimumStock: 300
+    value: 9775
   },
   {
     id: "25",
@@ -360,10 +285,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 1685,
     rate: 33,
-    value: 55605,
-    monthlyAvgSales: 260,
-    orderQuantity: 2000,
-    minimumStock: 600
+    value: 55605
   },
   {
     id: "26",
@@ -374,10 +296,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 3186,
     rate: 48,
-    value: 152928,
-    monthlyAvgSales: 29,
-    orderQuantity: 300,
-    minimumStock: 70
+    value: 152928
   },
   {
     id: "27",
@@ -388,10 +307,7 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 1494,
     rate: 115.07,
-    value: 171909.59,
-    monthlyAvgSales: 123,
-    orderQuantity: 1500,
-    minimumStock: 300
+    value: 171909.59
   },
   {
     id: "28",
@@ -402,597 +318,6 @@ export const inventoryData: InventoryItem[] = [
     typeOfGood: "Finished Goods",
     quantity: 639,
     rate: 145.08,
-    value: 92708.25,
-    monthlyAvgSales: 123,
-    orderQuantity: 1500,
-    minimumStock: 300
-  },
-  {
-    id: "29",
-    particulars: "Opsin Inhalation Capsules -10's",
-    particularId: "BS007",
-    manufacturingDate: "23-Jun-23",
-    expiryDate: "31-May-25",
-    typeOfGood: "Finished Goods",
-    quantity: 1953,
-    rate: 15.15,
-    value: 29590.06,
-    monthlyAvgSales: 13,
-    orderQuantity: 500,
-    minimumStock: 100
-  },
-  {
-    id: "30",
-    particulars: "Orcef 1gram - Vial",
-    particularId: "2401TD081",
-    manufacturingDate: "01-Oct-24",
-    expiryDate: "30-Sep-26",
-    typeOfGood: "Finished Goods",
-    quantity: 3,
-    rate: 15.5,
-    value: 46.5,
-    monthlyAvgSales: 6976,
-    orderQuantity: 50000,
-    minimumStock: 14000
-  },
-  {
-    id: "31",
-    particulars: "Orcef 1gram - Vial",
-    particularId: "FBP - 2413",
-    manufacturingDate: "01-Sep-24",
-    expiryDate: "31-Aug-26",
-    typeOfGood: "Finished Goods",
-    quantity: 3,
-    rate: 15.55,
-    value: -46.65,
-    monthlyAvgSales: 6976,
-    orderQuantity: 50000,
-    minimumStock: 14000
-  },
-  {
-    id: "32",
-    particulars: "Orcef 500 Inj",
-    particularId: "FBP-2305",
-    manufacturingDate: "01-Jul-23",
-    expiryDate: "30-Jun-25",
-    typeOfGood: "Finished Goods",
-    quantity: 550,
-    rate: 11.54,
-    value: 6348.6,
-    monthlyAvgSales: 1207,
-    orderQuantity: 10500,
-    minimumStock: 2500
-  },
-  {
-    id: "33",
-    particulars: "Orcef 500 Inj",
-    particularId: "FBP-2414",
-    manufacturingDate: "01-Sep-24",
-    expiryDate: "31-Aug-26",
-    typeOfGood: "Finished Goods",
-    quantity: 7262,
-    rate: 11.58,
-    value: 84089.31,
-    monthlyAvgSales: 1207,
-    orderQuantity: 10500,
-    minimumStock: 2500
-  },
-  {
-    id: "34",
-    particulars: "Orcef SB 1.5g Injection",
-    particularId: "FBP-2411",
-    manufacturingDate: "01-Aug-24",
-    expiryDate: "31-Jul-26",
-    typeOfGood: "Finished Goods",
-    quantity: 11012,
-    rate: 23.52,
-    value: 259044.09,
-    monthlyAvgSales: 3700,
-    orderQuantity: 25000,
-    minimumStock: 6000
-  },
-  {
-    id: "35",
-    particulars: "Orcillin TZ  4.5gm  Injection",
-    particularId: "FBP-2408",
-    manufacturingDate: "01-Aug-24",
-    expiryDate: "31-Jul-26",
-    typeOfGood: "Finished Goods",
-    quantity: 4919,
-    rate: 65.1,
-    value: 320221.34,
-    monthlyAvgSales: 1647,
-    orderQuantity: 10000,
-    minimumStock: 2000
-  },
-  {
-    id: "36",
-    particulars: "Ormol 1gm Tablets - 10's",
-    particularId: "CT465",
-    manufacturingDate: "20-Jul-24",
-    expiryDate: "30-Jun-27",
-    typeOfGood: "Finished Goods",
-    quantity: 7536,
-    rate: 7.42,
-    value: 55950.35,
-    monthlyAvgSales: 5,
-    orderQuantity: 200,
-    minimumStock: 200
-  },
-  {
-    id: "37",
-    particulars: "Orzeal Injection - 1gm",
-    particularId: "FBP 2406",
-    manufacturingDate: "01-Mar-24",
-    expiryDate: "28-Feb-26",
-    typeOfGood: "Finished Goods",
-    quantity: 2782,
-    rate: 130.12,
-    value: 361996.98,
-    monthlyAvgSales: 217,
-    orderQuantity: 5000,
-    minimumStock: 500
-  },
-  {
-    id: "38",
-    particulars: "Orzone SB Inj",
-    particularId: "FBP-2415",
-    manufacturingDate: "01-Sep-24",
-    expiryDate: "31-Aug-26",
-    typeOfGood: "Finished Goods",
-    quantity: 1390,
-    rate: 26.62,
-    value: 36998.1,
-    monthlyAvgSales: 856,
-    orderQuantity: 5000,
-    minimumStock: 1500
-  },
-  {
-    id: "39",
-    particulars: "Oxykon SP Tablets - 10's",
-    particularId: "OYX2402",
-    manufacturingDate: "01-Jun-24",
-    expiryDate: "31-May-26",
-    typeOfGood: "Finished Goods",
-    quantity: 8,
-    rate: 11.2,
-    value: 89.6,
-    monthlyAvgSales: 133,
-    orderQuantity: 500,
-    minimumStock: 250
-  },
-  {
-    id: "40",
-    particulars: "Oxykon SP Tablets - 10's",
-    particularId: "OYX2403",
-    manufacturingDate: "01-Sep-24",
-    expiryDate: "31-Aug-26",
-    typeOfGood: "Finished Goods",
-    quantity: 10480,
-    rate: 11.2,
-    value: 117376,
-    monthlyAvgSales: 133,
-    orderQuantity: 500,
-    minimumStock: 250
-  },
-  {
-    id: "41",
-    particulars: "Pafenil 1gm Tablets - 10's",
-    particularId: "CT 466",
-    manufacturingDate: "19-Jul-24",
-    expiryDate: "30-Jun-27",
-    typeOfGood: "Finished Goods",
-    quantity: 1,
-    rate: 7.43,
-    value: 7.43,
-    monthlyAvgSales: 34,
-    orderQuantity: 190,
-    minimumStock: 100
-  },
-  {
-    id: "42",
-    particulars: "Pafenil 1gm Tablets - 10's",
-    particularId: "CT792",
-    manufacturingDate: "01-Oct-24",
-    expiryDate: "30-Sep-27",
-    typeOfGood: "Finished Goods",
-    quantity: 6309,
-    rate: 8.22,
-    value: 51859.98,
-    monthlyAvgSales: 34,
-    orderQuantity: 190,
-    minimumStock: 100
-  },
-  {
-    id: "43",
-    particulars: "Pafenil IV  - 100ml",
-    particularId: "2425A0024",
-    manufacturingDate: "01-May-24",
-    expiryDate: "30-Apr-26",
-    typeOfGood: "Finished Goods",
-    quantity: 3653,
-    rate: 19.5,
-    value: 71233.5,
-    monthlyAvgSales: 1368,
-    orderQuantity: 8000,
-    minimumStock: 2000
-  },
-  {
-    id: "44",
-    particulars: "Pafenil IV  - 100ml",
-    particularId: "2425A0025",
-    manufacturingDate: "01-May-24",
-    expiryDate: "30-Apr-26",
-    typeOfGood: "Finished Goods",
-    quantity: 7900,
-    rate: 19.5,
-    value: 154050,
-    monthlyAvgSales: 1368,
-    orderQuantity: 8000,
-    minimumStock: 2000
-  },
-  {
-    id: "45",
-    particulars: "Panven 75 Tablets - 10's",
-    particularId: "PHV2401",
-    manufacturingDate: "01-Dec-24",
-    expiryDate: "30-Nov-26",
-    typeOfGood: "Finished Goods",
-    quantity: 8053,
-    rate: 14,
-    value: 112742,
-    monthlyAvgSales: 63,
-    orderQuantity: 500,
-    minimumStock: 100
-  },
-  {
-    id: "46",
-    particulars: "Procold Syrup - 60ml",
-    particularId: "LS2840",
-    manufacturingDate: "01-Sep-24",
-    expiryDate: "31-Aug-26",
-    typeOfGood: "Finished Goods",
-    quantity: 555,
-    rate: 12.89,
-    value: 7153.95,
-    monthlyAvgSales: 728,
-    orderQuantity: 4000,
-    minimumStock: 1500
-  },
-  {
-    id: "47",
-    particulars: "PZL 40 Injection",
-    particularId: "FBP-2412",
-    manufacturingDate: "01-Aug-24",
-    expiryDate: "31-Jan-26",
-    typeOfGood: "Finished Goods",
-    quantity: 6966,
-    rate: 7.52,
-    value: 52417.34,
-    monthlyAvgSales: 5326,
-    orderQuantity: 40000,
-    minimumStock: 8000
-  },
-  {
-    id: "48",
-    particulars: "Rabepass DSR Capsules - 10's",
-    particularId: "RBSS 2402",
-    manufacturingDate: "27-Aug-24",
-    expiryDate: "31-Jul-26",
-    typeOfGood: "Finished Goods",
-    quantity: 2040,
-    rate: 10.4,
-    value: 21216,
-    monthlyAvgSales: 87,
-    orderQuantity: 500,
-    minimumStock: 100
-  },
-  {
-    id: "49",
-    particulars: "Rabepass -L Caps 10s",
-    particularId: "BC786",
-    manufacturingDate: "13-Dec-23",
-    expiryDate: "31-May-25",
-    typeOfGood: "Finished Goods",
-    quantity: 1592,
-    rate: 16.62,
-    value: 26458.64,
-    monthlyAvgSales: 24,
-    orderQuantity: 1050,
-    minimumStock: 1050
-  },
-  {
-    id: "50",
-    particulars: "Rabepass -L Caps 10s",
-    particularId: "CC163",
-    manufacturingDate: "30-Mar-24",
-    expiryDate: "31-Aug-25",
-    typeOfGood: "Finished Goods",
-    quantity: 9982,
-    rate: 14.4,
-    value: 143740.8,
-    monthlyAvgSales: 24,
-    orderQuantity: 1050,
-    minimumStock: 1050
-  },
-  {
-    id: "51",
-    particulars: "Radar -C3 Softgel Capsule - 10's",
-    particularId: "QD-002",
-    manufacturingDate: "01-Sep-24",
-    expiryDate: "28-Feb-26",
-    typeOfGood: "Finished Goods",
-    quantity: 1983,
-    rate: 18.7,
-    value: 37082.1,
-    monthlyAvgSales: 125,
-    orderQuantity: 1000,
-    minimumStock: 300
-  },
-  {
-    id: "52",
-    particulars: "Radar -C3 Softgel Capsule - 10's",
-    particularId: "QD003",
-    manufacturingDate: "01-Dec-24",
-    expiryDate: "31-May-26",
-    typeOfGood: "Finished Goods",
-    quantity: 9912,
-    rate: 18.7,
-    value: 185354.4,
-    monthlyAvgSales: 125,
-    orderQuantity: 1000,
-    minimumStock: 300
-  },
-  {
-    id: "53",
-    particulars: "Rotat A 10 Capsules - 10's",
-    particularId: "ROT2401",
-    manufacturingDate: "01-Mar-24",
-    expiryDate: "28-Feb-26",
-    typeOfGood: "Finished Goods",
-    quantity: 5300,
-    rate: 15.55,
-    value: 82438.37,
-    monthlyAvgSales: 44,
-    orderQuantity: 1000,
-    minimumStock: 150
-  },
-  {
-    id: "54",
-    particulars: "Rotat A 20 Capsules - 10's",
-    particularId: "RAT 2401",
-    manufacturingDate: "01-Mar-24",
-    expiryDate: "28-Feb-26",
-    typeOfGood: "Finished Goods",
-    quantity: 7810,
-    rate: 17.56,
-    value: 137126.81,
-    monthlyAvgSales: 14,
-    orderQuantity: 1000,
-    minimumStock: 150
-  },
-  {
-    id: "55",
-    particulars: "Telpha - AM Tablets - 15's",
-    particularId: "CT736",
-    manufacturingDate: "10-Dec-24",
-    expiryDate: "30-Sep-26",
-    typeOfGood: "Finished Goods",
-    quantity: 2020,
-    rate: 13.2,
-    value: 26664,
-    monthlyAvgSales: 54,
-    orderQuantity: 350,
-    minimumStock: 100
-  },
-  {
-    id: "56",
-    particulars: "Tikmox CV 375 Tablets - 10's",
-    particularId: "TKPT2403",
-    manufacturingDate: "01-Nov-24",
-    expiryDate: "30-Apr-26",
-    typeOfGood: "Finished Goods",
-    quantity: 2719,
-    rate: 52.5,
-    value: 142747.5,
-    monthlyAvgSales: 124,
-    orderQuantity: 1000,
-    minimumStock: 1000
-  },
-  {
-    id: "57",
-    particulars: "Tikmox CV -625(P.S.) - 1x2's",
-    particularId: "CAAD4003",
-    manufacturingDate: "01-Oct-23",
-    expiryDate: "31-Mar-25",
-    typeOfGood: "Finished Goods",
-    quantity: 90,
-    rate: 16.9,
-    value: 1521,
-    monthlyAvgSales: 446,
-    orderQuantity: 1000,
-    minimumStock: 1000
-  },
-  {
-    id: "58",
-    particulars: "Tikmox CV 625 Tablets - 10's",
-    particularId: "TOPT2406",
-    manufacturingDate: "01-Nov-24",
-    expiryDate: "30-Apr-26",
-    typeOfGood: "Finished Goods",
-    quantity: 3454,
-    rate: 60,
-    value: 207240,
-    monthlyAvgSales: 446,
-    orderQuantity: 1000,
-    minimumStock: 1000
-  },
-  {
-    id: "59",
-    particulars: "Tikmox CV DS Dry Syrup - 30ml",
-    particularId: "CAAN5001",
-    manufacturingDate: "01-May-24",
-    expiryDate: "31-Oct-25",
-    typeOfGood: "Finished Goods",
-    quantity: 551,
-    rate: 34.5,
-    value: 19009.5,
-    monthlyAvgSales: 1468,
-    orderQuantity: 10000,
-    minimumStock: 3000
-  },
-  {
-    id: "60",
-    particulars: "Tikmox CV DS Dry Syrup - 30ml",
-    particularId: "CAAN5002",
-    manufacturingDate: "01-Dec-24",
-    expiryDate: "31-May-26",
-    typeOfGood: "Finished Goods",
-    quantity: 9875,
-    rate: 34,
-    value: 335750,
-    monthlyAvgSales: 1468,
-    orderQuantity: 10000,
-    minimumStock: 3000
-  },
-  {
-    id: "61",
-    particulars: "Tikmox - CV Kid - 30ml",
-    particularId: "CAAG5001",
-    manufacturingDate: "01-Sep-24",
-    expiryDate: "28-Feb-26",
-    typeOfGood: "Finished Goods",
-    quantity: 5823,
-    rate: 23.7,
-    value: 138005.1,
-    monthlyAvgSales: 1219,
-    orderQuantity: 10000,
-    minimumStock: 3000
-  },
-  {
-    id: "62",
-    particulars: "Vildakon - M Tablets - 10's",
-    particularId: "VGPT2401",
-    manufacturingDate: "01-Jan-24",
-    expiryDate: "31-Dec-25",
-    typeOfGood: "Finished Goods",
-    quantity: 785,
-    rate: 15.6,
-    value: 12246,
-    monthlyAvgSales: 64,
-    orderQuantity: 500,
-    minimumStock: 150
-  },
-  {
-    id: "63",
-    particulars: "Vildakon - M Tablets - 10's",
-    particularId: "VGPT2402",
-    manufacturingDate: "01-Dec-24",
-    expiryDate: "30-Nov-26",
-    typeOfGood: "Finished Goods",
-    quantity: 4993,
-    rate: 15.6,
-    value: 77890.8,
-    monthlyAvgSales: 64,
-    orderQuantity: 500,
-    minimumStock: 150
-  },
-  {
-    id: "64",
-    particulars: "Vovekon Gel - 30g",
-    particularId: "ODP24011",
-    manufacturingDate: "25-Jun-24",
-    expiryDate: "31-May-26",
-    typeOfGood: "Finished Goods",
-    quantity: 4,
-    rate: 16.6,
-    value: 66.4,
-    monthlyAvgSales: 2356,
-    orderQuantity: 10000,
-    minimumStock: 4000
-  },
-  {
-    id: "65",
-    particulars: "Vovekon Gel - 30g",
-    particularId: "ODP24015",
-    manufacturingDate: "31-Dec-24",
-    expiryDate: "30-Nov-26",
-    typeOfGood: "Finished Goods",
-    quantity: 3495,
-    rate: 16.6,
-    value: 58017,
-    monthlyAvgSales: 2356,
-    orderQuantity: 10000,
-    minimumStock: 4000
-  },
-  {
-    id: "66",
-    particulars: "Vovekon Gel - 30g",
-    particularId: "ODP25009",
-    manufacturingDate: "01-Jan-25",
-    expiryDate: "31-Dec-26",
-    typeOfGood: "Finished Goods",
-    quantity: 4862,
-    rate: 16.6,
-    value: 80709.2,
-    monthlyAvgSales: 2356,
-    orderQuantity: 10000,
-    minimumStock: 4000
-  },
-  {
-    id: "67",
-    particulars: "VOVEKON GEL (P.S)",
-    particularId: "ODP010",
-    manufacturingDate: "01-Nov-22",
-    expiryDate: "31-Oct-24",
-    typeOfGood: "Finished Goods",
-    quantity: 5,
-    rate: 16.77,
-    value: -83.85,
-    monthlyAvgSales: 2356,
-    orderQuantity: 10000,
-    minimumStock: 4000
-  },
-  {
-    id: "68",
-    particulars: "VOVEKON GEL (P.S)",
-    particularId: "ODP24012",
-    manufacturingDate: "01-Jun-24",
-    expiryDate: "31-May-26",
-    typeOfGood: "Finished Goods",
-    quantity: 5,
-    rate: 16.6,
-    value: 83,
-    monthlyAvgSales: 2356,
-    orderQuantity: 10000,
-    minimumStock: 4000
-  },
-  {
-    id: "69",
-    particulars: "Xalmox-LB Capsules - 10's",
-    particularId: "CXA-014",
-    manufacturingDate: "22-Oct-24",
-    expiryDate: "30-Sep-25",
-    typeOfGood: "Finished Goods",
-    quantity: 3,
-    rate: 28.55,
-    value: 85.65,
-    monthlyAvgSales: 184,
-    orderQuantity: 1000,
-    minimumStock: 300
-  },
-  {
-    id: "70",
-    particulars: "Xalmox-LB Capsules - 10's(Ps)",
-    particularId: "CXA-013",
-    manufacturingDate: "01-May-24",
-    expiryDate: "30-Apr-26",
-    typeOfGood: "Finished Goods",
-    quantity: 7,
-    rate: 29.6,
-    value: 207.2,
-    monthlyAvgSales: 184,
-    orderQuantity: 1000,
-    minimumStock: 300
+    value: 92708.25
   }
-]
+];
