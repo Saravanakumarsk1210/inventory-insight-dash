@@ -239,8 +239,8 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {uniqueProducts.map((product, index) => (
-                      <SelectItem key={index} value={product}>
-                        {product}
+                      <SelectItem key={index} value={product || `product-${index}`}>
+                        {product || `Product ${index}`}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -390,12 +390,12 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                     <TableCell className="text-right">
                       {typeof item.rate === 'number' 
                         ? item.rate.toFixed(2) 
-                        : parseFloat(item.rate as string).toFixed(2)}
+                        : parseFloat(item.rate as string || '0').toFixed(2)}
                     </TableCell>
                     <TableCell className="text-right">
                       {typeof item.value === 'number' 
                         ? item.value.toLocaleString() 
-                        : parseFloat(item.value as string).toLocaleString()}
+                        : parseFloat(item.value as string || '0').toLocaleString()}
                     </TableCell>
                     <TableCell>{item.manufacturingDate}</TableCell>
                     <TableCell>{item.expiryDate}</TableCell>
