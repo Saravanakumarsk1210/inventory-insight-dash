@@ -23,8 +23,8 @@ interface AnalyticsTabProps {
 
 export function AnalyticsTab({ data }: AnalyticsTabProps) {
   // State for filtering and sorting products insights table
-  const [productFilter, setProductFilter] = useState("");
-  const [stockStatusFilter, setStockStatusFilter] = useState("");
+  const [productFilter, setProductFilter] = useState("all");
+  const [stockStatusFilter, setStockStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState<keyof InventoryItem | "">("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,7 +94,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
       item.particulars.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.particularId.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesProductType = productFilter === "" || 
+    const matchesProductType = productFilter === "all" || 
       (productFilter === "tablet" && item.particulars.toLowerCase().includes("tablet")) ||
       (productFilter === "injection" && (
         item.particulars.toLowerCase().includes("inj") || 
@@ -115,7 +115,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
     if (quantity < 100) stockStatus = "low";
     if (quantity > 5000) stockStatus = "excess";
     
-    const matchesStockStatus = stockStatusFilter === "" || stockStatus === stockStatusFilter;
+    const matchesStockStatus = stockStatusFilter === "all" || stockStatus === stockStatusFilter;
     
     return matchesSearch && matchesProductType && matchesStockStatus;
   });
@@ -309,7 +309,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="tablet">Tablets</SelectItem>
                     <SelectItem value="injection">Injections</SelectItem>
                     <SelectItem value="syrup">Syrups</SelectItem>
@@ -323,7 +323,7 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="low">Low Stock</SelectItem>
                     <SelectItem value="normal">Normal</SelectItem>
                     <SelectItem value="excess">Excess</SelectItem>
